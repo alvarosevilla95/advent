@@ -1,3 +1,4 @@
+import asyncio
 import itertools
 
 def add(ins, outs, p, i, v1, v2):
@@ -59,38 +60,37 @@ def parse_instruction(p, i):
 def get_value_lazy(p, i, f):
     return (lambda: p[p[i]]) if f == 0 else lambda: p[i]
 
-def eval_till_input(p, ins, outs):
+def eval_program(p, ins, outs):
     i = 0
     while i >= 0:
         c, v1, v2 = parse_instruction(p, i)
-        if c == 3: yield False
         i = opcodes[c](ins, outs, p, i, v1, v2) 
-    yield True
 
-def eval_program(p):
-    r = eval_till_input(p, std_in(), std_out())
-    while not next(r): pass
+async def eval_async(p, inq, outq):
+    i, ib, ob = 0, [], []
+    ins, outs = pipe_in(ib), pipe_out(ob)
+    while i >= 0:
+        c, v1, v2 = parse_instruction(p, i)
+        if c == 3: ib.append(await inq.get())
+        i = opcodes[c](ins, outs, p, i, v1, v2) 
+        while len(ob) > 0: await outq.put(ob.pop(0))
 
 def test_all(program, values):
     maxs, maxp = 0, []
     for perm in itertools.permutations(values):
         s = test_permutation(program, perm)
-        if maxs < s:
-            maxs, maxp= s, perm
+        if maxs < s: maxs, maxp = s, perm
     return maxs, maxp
 
 def test_permutation(program, perm):
-    bufs = [[x] for x in perm]
-    bufs[0].append(0)
-    runners = []
-    for i in range(len(bufs)):
-        ins = pipe_in(bufs[i])
-        outs = pipe_out(bufs[(i+1)%len(bufs)])
-        runners.append(eval_till_input(program.copy(), ins, outs))
-    done = False
-    while not done:
-        for r in runners: done = next(r)
-    return bufs[0][0]
+    queues = [asyncio.Queue() for x in perm]
+    for i, x in enumerate(perm): queues[i].put_nowait(x)
+    queues[0].put_nowait(0)
+    rs = []
+    for i in range(len(queues)):
+        rs.append(eval_async(program.copy(), queues[i], queues[(i+1)%len(queues)]))
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*rs))
+    return queues[0].get_nowait()
 
 with open('./input.txt') as f:
     program = load_program(f.read())
