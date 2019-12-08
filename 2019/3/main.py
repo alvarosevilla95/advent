@@ -4,7 +4,7 @@ def get_path(insts):
     dy = dict(zip('LRDU', [0, 0, -1, 1]))
     grid, x, y, c = {}, 0, 0 ,0
     for inst in insts:
-        for i in range(int(inst[1:])):
+        for _ in range(int(inst[1:])):
             x += dx[inst[0]]
             y += dy[inst[0]]
             c += 1
