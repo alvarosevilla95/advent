@@ -41,39 +41,49 @@ def order_by_hit(os):
         oss = list(filter(lambda x: len(x)>0, oss))
     return out
 
+def animate_hits(screen, p, points):
+    os = order_by_hit(others(p, points))
+    while os:
+        killed = os.pop(0)[0]
+        points.remove(killed)
+        frame = get_frame(p, killed, points)
+        draw(screen, frame)
 
-def draw(pad, lenx, leny, pixels, points, o, k):
-    for j in range(leny):
-        for i in range(lenx):
-            p = (j, i)
-            if  p == o: c = 0
-            elif p == k: c = 1
-            elif p in points: c = 2
-            else: c = 3
-            pad.addstr(i, j, pixels[c][0], pixels[c][1])
-    pad.refresh(0, 0, 0, 0, lenx+1, leny+1)
-    time.sleep(0.05)
-
-def render(screen, p, os, points):
+def render(screen, f, *args):
     curses.curs_set(0)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    pixels = [
-            ('0', curses.color_pair(1) | curses.A_BOLD), 
-            ('X', curses.color_pair(2) | curses.A_BOLD), 
-            ('#', curses.color_pair(3) | curses.A_BOLD), 
-            ('.', curses.color_pair(4))
-            ]
-    lenx, leny = max(points, key=lambda x:x[0])[0] + 1, max(points, key=lambda x:x[1])[1] + 1
-    pad = curses.newpad(lenx+1, leny+1)
-    while os:
-        killed = os.pop(0)[0]
-        points.remove(killed)
-        draw(pad, lenx, leny, pixels, points, p, killed)
-
+    f(screen, *args)
     curses.curs_set(1)
+
+def draw(screen, frame):
+    for i, r in enumerate(frame):
+        for j, p in enumerate(r):
+            screen.addstr(j, i, p[0], p[1])
+    screen.refresh()
+    time.sleep(0.1)
+
+def get_frame(o, k, points):
+    pixels = [
+        ('0', curses.color_pair(1) | curses.A_BOLD), 
+        ('X', curses.color_pair(2) | curses.A_BOLD), 
+        ('#', curses.color_pair(3) | curses.A_BOLD), 
+        ('.', curses.color_pair(4))
+        ]
+    lenx, leny = max(points, key=lambda x:x[0])[0] + 1, max(points, key=lambda x:x[1])[1] + 1
+    frame = []
+    for i in range(leny):
+        row = []
+        for j in range(lenx):
+            p = (i, j)
+            c = 0 if p == o else 1 if p == k else 2 if p in points else 3
+            row.append(pixels[c])
+        frame.append(row)
+    return frame
+
+
 
 data = open('input.txt').read().splitlines()
 points = asteroids(data)
@@ -83,6 +93,5 @@ p, ss = max(([(p, sees(others(p, points))) for p in points]), key=lambda x: len(
 print(p, len(ss))
 
 # Part 2
-os = order_by_hit(others(p, points))
 # for i in range(len(os)): print(i+1, os.pop(0))
-curses.wrapper(lambda s: render(s, p, os, points))
+curses.wrapper(lambda s: render(s, animate_hits, p, points))
