@@ -1,10 +1,13 @@
 import re
 import operator
 from math import gcd
+from functools import reduce
 
-def reduce(f, v, l):
-    for e in l: v = f(v, e)
-    return v
+def cmp(a, b):
+    return (a>b)-(a<b)
+
+def zip_list(l):
+    return list(zip(*list(l)))
 
 def lcm(a,b):
     return a*b//gcd(a,b)
@@ -14,46 +17,44 @@ def parse_input(data):
     data = [[int(v) for v in d] for d in data]
     return [[d, [0,0,0]] for d in data]
 
-def dims():
-    return range(3)
-
 def dim(moons, i):
     return [[p[i], v[i]] for p, v in moons]
 
+def undim(dims):
+    return [zip_list(v) for v in zip_list(dims)]
+
+def dim_map(f, moons):
+    return map(lambda d: f(dim(moons,d)), range(3))
+
 def evolve_dim(moons):
-    for mi, moon in enumerate(moons):
-        for other in moons[mi+1:]:
-            d = 1 if moon[0] < other[0] else -1 if moon[0] > other[0] else 0
-            moon[1], other[1] = moon[1]+d, other[1]-d
+    for mi, m in enumerate(moons): 
+        for o in moons[mi+1:]:
+            d = cmp(o[0], m[0])
+            m[1], o[1] = m[1]+d, o[1]-d
     for moon in moons: moon[0] += moon[1]
     return moons
 
 def evolve(moons):
-    ds = [evolve_dim(dim(moons, i)) for i in dims()]
-    return [[list(v) for v in zip(*d)] for d in zip(*ds)]
+    return undim(dim_map(evolve_dim, moons)) 
 
 def energy(moon):
-    return [sum([abs(v) for v in c]) for c in moon]
+    return [sum(map(abs, c)) for c in moon]
 
 def total_energy(moon):
-    return reduce(operator.mul, 1, energy(moon))
+    return reduce(operator.mul, energy(moon))
 
 def system_energy(moons):
-    return reduce(operator.add, 0, map(total_energy, moons))
+    return reduce(operator.add, map(total_energy, moons))
 
 def steps_to_loop(dim):
-    n = [d[:] for d in dim]
-    i = 1
+    i, n = 1, [d[:] for d in dim]
     while evolve_dim(n) != dim: i += 1
     return i
 
-
 moons = parse_input(open('input.txt').read())
 # Part 1
-for j in range(1000): 
-    moons = evolve(moons)
+for j in range(1000): moons = evolve(moons)
 print(system_energy(moons))
-
 # Part 2
-loops = [steps_to_loop(dim(moons, i)) for i in dims()]
-print(reduce(lcm, 1, loops))
+loops = dim_map(steps_to_loop, moons)
+print(reduce(lcm, loops))
