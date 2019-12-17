@@ -3,12 +3,9 @@ def load_program(code):
 
 def parse_program(program):
     for i in range(0, len(program), 4):
-        if program[i] == 1:
-            op = lambda x, y: x + y
-        elif program[i] == 2:
-            op = lambda x, y: x * y
-        else:
-            break
+        if program[i] == 1: op = lambda x, y: x + y
+        elif program[i] == 2: op = lambda x, y: x * y
+        else: break
         program[program[i+3]] = op(program[program[i+1]], program[program[i+2]])
     return program
 
