@@ -2,6 +2,12 @@
 #[allow(dead_code)]
 use macroquad::prelude::*;
 
+pub mod utils;
+// mod day1;
+// mod day2;
+// mod day3;
+mod day4;
+
 fn conf() -> Conf {
     Conf {
         window_title: String::from("Macroquad"),
@@ -14,4 +20,6 @@ fn conf() -> Conf {
 }
 
 #[macroquad::main(conf)]
-async fn main() {}
+async fn main() {
+    day4::run().await;
+}
