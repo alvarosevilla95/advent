@@ -1,0 +1,31 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Life</title>
+    <style>
+        html,
+        body,
+        canvas {
+            margin: 0px;
+            padding: 0px;
+            width: 100%;
+            background: #000010;
+            z-index: 0;
+            color: white;
+        }
+        canvas {
+            height: 100%
+        }
+        #text a {
+          color: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="glcanvas" tabindex='1'></canvas>
+    <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
+    <script>load("target/wasm32-unknown-unknown/release/advent_2021.wasm");</script> <!-- Your compiled wasm file -->
+</body>
+</html>
