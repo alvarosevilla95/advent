@@ -1,4 +1,4 @@
-// https://adventofcode.com/2021/day/3
+// https://adventofcode.com/2021/day/4
 
 use macroquad::prelude::*;
 use nalgebra::Vector5;
@@ -47,7 +47,7 @@ pub async fn run() {
     'outer: for r in rng {
         for b in boards.iter_mut().filter(|b| !b.won()) {
             winners += b.tick(r) as usize;
-            let part_1 = |w: usize| w == 1;
+            let _part_1 = |w: usize| w == 1;
             let part_2 = |w: usize| w == total;
             if part_2(winners) {
                 let sum = b.score();
@@ -79,8 +79,8 @@ impl Board {
             .map(|e| (e, self.row_scores[e.0] + 1, self.column_scores[e.1] + 1))
             .map(|(e, s, v)| {
                 self.entries.insert(r, (e.0, e.1, true));
-                std::mem::replace(&mut self.row_scores[e.0], s);
-                std::mem::replace(&mut self.column_scores[e.1], v);
+                self.row_scores[e.0] = s;
+                self.column_scores[e.1] = v;
                 self.won()
             })
             .unwrap_or_else(|| false)
@@ -89,8 +89,8 @@ impl Board {
     fn score(&self) -> i32 {
         self.entries
             .iter()
-            .filter(|(k, v)| !v.2)
-            .map(|(k, v)| k)
+            .filter(|(_k, v)| !v.2)
+            .map(|(k, _v)| k)
             .sum::<i32>()
     }
 
@@ -101,7 +101,7 @@ impl Board {
                 .map(|j| {
                     self.entries
                         .iter()
-                        .find(move |(k, v)| (v.0, v.1) == (i, j))
+                        .find(move |(_k, v)| (v.0, v.1) == (i, j))
                         .map(|(k, v)| (k, v.2))
                         .unwrap()
                 })
