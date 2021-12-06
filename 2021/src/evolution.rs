@@ -1,4 +1,3 @@
-#[allow(dead_code)]
 use macroquad::prelude::*;
 use rand::gen_range;
 use rstar::{PointDistance, RTree, RTreeObject, AABB};
@@ -12,10 +11,10 @@ fn random_gene() -> char {
 
 pub async fn run() {
     rand::srand(miniquad::date::now().to_bits());
-    let mut biots = BiotCollection::new(500);
+    let mut biots = BiotCollection::new(500, vec2(screen_width(), screen_height()));
 
     loop {
-        biots.step();
+        biots.step(vec2(screen_width(), screen_height()));
         clear_background(Color::new(0., 0., 0.1, 1.0));
         biots.draw();
         draw_text(
@@ -29,18 +28,19 @@ pub async fn run() {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct BiotCollection {
     biots: Vec<Biot>,
 }
 
 impl BiotCollection {
-    pub fn new(n: usize) -> Self {
+    pub fn new(n: usize, screen: Vec2) -> Self {
         Self {
-            biots: (0..n).map(|_i| Biot::random_new()).collect(),
+            biots: (0..n).map(|_i| Biot::random_new(screen)).collect(),
         }
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self, screen: Vec2) {
         let mut new: Vec<Biot> = Vec::new();
         let tree: RTree<TreePoint> = RTree::bulk_load(
             self.biots
@@ -80,7 +80,7 @@ impl BiotCollection {
                 }
             }
             self.biots[n]
-                .step(&tree, feed_dir)
+                .step(&tree, feed_dir, screen)
                 .filter(|_v| self.biots.len() < 4000)
                 .map(|offspring| new.push(offspring));
         }
@@ -95,7 +95,9 @@ impl BiotCollection {
             }
         }
         self.biots.retain(|b| !b.dead());
-        self.biots.append(&mut new);
+        if self.biots.len() < 10000 {
+            self.biots.append(&mut new);
+        }
     }
 
     pub fn draw(&self) {
@@ -123,14 +125,11 @@ pub struct Biot {
 }
 
 impl Biot {
-    pub fn random_new() -> Self {
+    pub fn random_new(screen: Vec2) -> Self {
         let genome = (0..13).map(|_i| random_gene()).collect();
         let mut s = Self {
             life: 0.,
-            pos: vec2(
-                gen_range(0., 1.) * screen_width(),
-                gen_range(0., 1.) * screen_height(),
-            ),
+            pos: vec2(gen_range(0., 1.) * screen[0], gen_range(0., 1.) * screen[1]),
             speed: vec2(0., 0.),
             age: 0,
             genome,
@@ -145,7 +144,12 @@ impl Biot {
         s
     }
 
-    pub fn step(&mut self, rtree: &RTree<TreePoint>, feed_dir: Option<Vec2>) -> Option<Biot> {
+    pub fn step(
+        &mut self,
+        rtree: &RTree<TreePoint>,
+        feed_dir: Option<Vec2>,
+        screen: Vec2,
+    ) -> Option<Biot> {
         let mut offspring = None;
         let adult_factor = 4.;
         if self.life >= self.base_life() * adult_factor {
@@ -165,8 +169,8 @@ impl Biot {
             }
         }
         self.pos += self.speed;
-        self.pos.x = modulus(self.pos.x, screen_width());
-        self.pos.y = modulus(self.pos.y, screen_height());
+        self.pos.x = modulus(self.pos.x, screen[0]);
+        self.pos.y = modulus(self.pos.y, screen[1]);
         self.speed *= 0.9;
         self.life += (self.photosynthesis - self.metabolism()) * 0.4;
         if gen_range(0., 1.) < 0.2 * self.motion {
@@ -259,7 +263,6 @@ impl Biot {
     }
 }
 
-
 pub struct TreePoint {
     pub x: f32,
     pub y: f32,
@@ -288,4 +291,22 @@ where
     T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy,
 {
     ((a % b) + b) % b
+}
+
+extern crate test;
+
+#[cfg(test)]
+mod tests {
+    use super::test::Bencher;
+    use super::BiotCollection;
+    use macroquad::prelude::*;
+
+    #[bench]
+    fn bench_biots_step(b: &mut Bencher) {
+        rand::srand(0);
+        let mut biots = BiotCollection::new(5000, vec2(800., 600.));
+        b.iter(|| {
+            biots.step(vec2(800., 600.));
+        });
+    }
 }
