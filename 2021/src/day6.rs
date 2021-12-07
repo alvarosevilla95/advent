@@ -12,8 +12,8 @@ pub async fn run() {
     let _input = "3,4,3,1,2";
     let input = get_input(6).await;
     let mut fish = parse_fish(&input);
-    iterate_fish_stochastic(&mut fish, 420);
-    info!("Total fish: {}", fish.values().sum::<i64>(),);
+    iterate_fish(&mut fish, 420);
+    info!("Total fish: {}", fish.values().sum::<i64>());
     info!("Current schedule: {:?}", fish);
 }
 
@@ -48,14 +48,6 @@ fn iterate_fish(fish: &mut HashMap<i32, i64>, time: i32) {
 }
 
 fn iterate_fish_stochastic(raw_fish: &mut HashMap<i32, i64>, time: i32) {
-    fn euler_exp(m: &Array2<i64>, e: i32) -> Array2<i64> {
-        match e {
-            1 => m.to_owned(),
-            e if e % 2 == 0 => euler_exp(&(m * m), e / 2),
-            _ => euler_exp(m, (e - 1) / 2) * m,
-        }
-    }
-
     let mut fish: Array<i64, Dim<[usize; 1]>> = Array::zeros(9);
     for (i, v) in raw_fish.iter() {
         *fish.get_mut(*i as usize).unwrap() = *v;
@@ -71,8 +63,19 @@ fn iterate_fish_stochastic(raw_fish: &mut HashMap<i32, i64>, time: i32) {
         [0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0],
     ]);
-    let m = euler_exp(&m, 256);
+
+    fn euler_exp(m: &Array2<i64>, e: i32) -> Array2<i64> {
+        assert!(m.dim().0 == m.dim().1);
+        assert!(e > 0);
+        match e {
+            1 => m.to_owned(),
+            e if e % 2 == 0 => euler_exp(&(m * m), e / 2),
+            _ => euler_exp(m, (e - 1) / 2) * m,
+        }
+    }
+    let m = euler_exp(&m, time);
     let fish = m.dot(&fish);
+
     for (i, v) in fish.iter().enumerate() {
         *raw_fish.get_mut(&(i as i32)).unwrap() = *v;
     }
