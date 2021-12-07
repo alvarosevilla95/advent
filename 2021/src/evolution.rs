@@ -1,7 +1,11 @@
 use macroquad::prelude::*;
 use rand::gen_range;
+use rayon::prelude::*;
 use rstar::{PointDistance, RTree, RTreeObject, AABB};
-use std::collections::HashSet;
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 
 const LETTERS: &[char] = &['a', 'd', 'p', 'm', 'n', 'n', 'n', 'i'];
 
@@ -13,17 +17,28 @@ pub async fn run() {
     rand::srand(miniquad::date::now().to_bits());
     let mut biots = BiotCollection::new(500, vec2(screen_width(), screen_height()));
 
+    let _pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(16)
+        .build()
+        .unwrap();
+
+    let mut now = Instant::now();
     loop {
         biots.step(vec2(screen_width(), screen_height()));
         clear_background(Color::new(0., 0., 0.1, 1.0));
         biots.draw();
         draw_text(
-            &format!("FPS: {}, biots: {}", get_fps(), biots.len()),
+            &format!("FPS: {}, biots: {}", get_fps(), biots.size()),
             screen_width() - 250.,
             screen_height() - 5.,
             28.,
             LIGHTGRAY,
         );
+        let ft = now.elapsed();
+        if ft.as_nanos() < 32000000 {
+            thread::sleep(Duration::from_nanos(32000000 - ft.as_nanos() as u64));
+        }
+        now = Instant::now();
         next_frame().await
     }
 }
@@ -40,9 +55,16 @@ impl BiotCollection {
         }
     }
 
+    pub fn draw(&self) {
+        self.biots.iter().for_each(|b| b.draw())
+    }
+
+    pub fn size(&self) -> usize {
+        self.biots.len()
+    }
+
     pub fn step(&mut self, screen: Vec2) {
-        let mut new: Vec<Biot> = Vec::new();
-        let tree: RTree<TreePoint> = RTree::bulk_load(
+        let tree = RTree::bulk_load(
             self.biots
                 .iter()
                 .enumerate()
@@ -54,58 +76,82 @@ impl BiotCollection {
                 .collect(),
         );
 
-        for n in 0..(self.biots.len()) {
-            let mut feed_dir: Option<Vec2> = None;
-            let biot = &self.biots[n];
-            if self.biots[n].intelligence > 0. {
-                let neighbors = tree
-                    .nearest_neighbor_iter_with_distance_2(&[biot.pos.x as f64, biot.pos.y as f64]);
-                for (other, d2) in neighbors {
-                    if other.idx == n {
-                        continue;
-                    }
-                    if d2 as f32 > (biot.intelligence.powf(2.)) * 1600. {
-                        break;
-                    }
-                    if biot.stronger(&self.biots[other.idx]) {
-                        feed_dir = Some(
-                            vec2(
-                                other.x as f32 - self.biots[n].pos.x,
-                                other.y as f32 - self.biots[n].pos.y,
-                            )
-                            .normalize(),
-                        );
-                        break;
-                    }
-                }
-            }
-            self.biots[n]
-                .step(&tree, feed_dir, screen)
-                .filter(|_v| self.biots.len() < 4000)
-                .map(|offspring| new.push(offspring));
-        }
+        let dirs = self.find_prey(&tree);
 
-        let mut visited: HashSet<usize> = HashSet::new();
-        for f in tree.iter() {
-            visited.insert(f.idx);
-            for s in tree.locate_within_distance([f.x as f64, f.y as f64], 100.) {
-                if !visited.contains(&s.idx) {
-                    Biot::interact(&mut self.biots, f.idx, s.idx);
-                }
+        let mut new = self
+            .biots
+            .par_iter_mut()
+            .enumerate()
+            .map(|(n, biot)| biot.step(&tree, dirs[n], screen))
+            .flatten()
+            .collect();
+
+        let lifes = self.interact(&tree);
+
+        for i in 0..lifes.len() {
+            let l = lifes[i];
+            let c = self.biots[i].life;
+            self.biots[i].life = match l {
+                None => 0.,
+                Some(e) => c + e,
             }
         }
         self.biots.retain(|b| !b.dead());
-        if self.biots.len() < 10000 {
-            self.biots.append(&mut new);
-        }
+        self.biots.append(&mut new);
     }
 
-    pub fn draw(&self) {
-        self.biots.iter().for_each(|b| b.draw())
+    fn find_prey(&mut self, tree: &RTree<TreePoint>) -> Vec<Option<Vec2>> {
+        (0..self.biots.len())
+            .into_par_iter()
+            .map(|n| match self.biots[n].intelligence {
+                i if i == 0. => None,
+                _ => tree
+                    .nearest_neighbor_iter_with_distance_2(&[
+                        self.biots[n].pos.x as f64,
+                        self.biots[n].pos.y as f64,
+                    ])
+                    .take_while(|(_other, d2)| {
+                        *d2 as f32 > (self.biots[n].intelligence.powf(2.)) * 1600.
+                    })
+                    .find(|(other, _d2)| {
+                        other.idx != n && self.biots[n].stronger(&self.biots[other.idx])
+                    })
+                    .map(|(other, _d2)| {
+                        vec2(
+                            other.x as f32 - self.biots[n].pos.x,
+                            other.y as f32 - self.biots[n].pos.y,
+                        )
+                        .normalize()
+                    }),
+            })
+            .collect::<Vec<Option<Vec2>>>()
     }
 
-    pub fn len(&self) -> usize {
-        self.biots.len()
+    fn interact(&mut self, tree: &RTree<TreePoint>) -> Vec<Option<f32>> {
+        (0..self.biots.len())
+            .into_par_iter()
+            .map(|n| {
+                let mut life = Some(0.);
+                for s in tree.locate_within_distance(
+                    [self.biots[n].pos.x as f64, self.biots[n].pos.y as f64],
+                    100.,
+                ) {
+                    if s.idx != n {
+                        let i = n;
+                        let j = s.idx;
+                        let dist = (self.biots[i].pos - self.biots[j].pos).length();
+                        if dist < 20. * (self.biots[i].weight() + self.biots[j].weight()) {
+                            if self.biots[i].stronger(&self.biots[j]) {
+                                life = life.map(|l| l + self.biots[j].life * 0.8);
+                            } else if self.biots[j].stronger(&self.biots[i]) {
+                                return None;
+                            }
+                        }
+                    }
+                }
+                life
+            })
+            .collect::<Vec<Option<f32>>>()
     }
 }
 
@@ -122,7 +168,30 @@ pub struct Biot {
     pub photosynthesis: f32,
     pub motion: f32,
     pub intelligence: f32,
+    pub feed_dir: Option<Vec2>,
 }
+
+// struct Parameters {
+//     adult_factor: f32,
+//     reproduction_area: f32,
+//     reproduction_mutation: f32,
+//     reproduction_speed: f32,
+//     reproduction_life: f32,
+//     speed_decay: f32,
+//     photo_life: f32,
+//     motion_chance: f32,
+//     speed_scale: f32,
+//     max_age: f32,
+//     defense_scale: f32,
+//     base_life_scale: f32,
+//     metabolism_global: f32,
+//     metabolism_attack: f32,
+//     metabolism_defense: f32,
+//     metabolism_motion: f32,
+//     metabolism_intelligence: f32,
+//     location_distance: f32,
+//     interaction_distance: f32,
+// }
 
 impl Biot {
     pub fn random_new(screen: Vec2) -> Self {
@@ -138,6 +207,7 @@ impl Biot {
             photosynthesis: 0.,
             motion: 0.,
             intelligence: 0.,
+            feed_dir: None,
         };
         s.set_from_genome();
         s.life = s.base_life();
@@ -189,33 +259,21 @@ impl Biot {
         offspring
     }
 
-    pub fn interact(biots: &mut Vec<Self>, i: usize, j: usize) {
-        let dist = (biots[i].pos - biots[j].pos).length();
-        if dist < 10. * (biots[i].weight() + biots[j].weight()) {
-            if biots[i].stronger(&biots[j]) {
-                biots[i].life += biots[j].life * 0.8;
-                biots[j].life = 0.;
-            } else if biots[j].stronger(&biots[i]) {
-                biots[j].life += biots[i].life * 0.8;
-                biots[i].life = 0.;
-            }
-        }
-    }
-
     pub fn dead(&self) -> bool {
         self.life <= 0. || self.age >= 10000
     }
 
     pub fn stronger(&self, other: &Self) -> bool {
-        self.attack > other.attack + other.defense * 0.9
+        self.attack > other.attack + other.defense * 0.5
     }
 
     fn set_from_genome(&mut self) {
-        self.attack = self.genome.iter().filter(|&&c| c == 'a').count() as f32 * 0.1;
-        self.defense = self.genome.iter().filter(|&&c| c == 'd').count() as f32 * 0.1;
-        self.photosynthesis = self.genome.iter().filter(|&&c| c == 'p').count() as f32 * 0.1;
-        self.motion = self.genome.iter().filter(|&&c| c == 'm').count() as f32 * 0.1;
-        self.intelligence = self.genome.iter().filter(|&&c| c == 'i').count() as f32 * 10.;
+        let cnt = |l| self.genome.iter().filter(|&&c| c == l).count() as f32;
+        self.attack = cnt('a') * 0.1;
+        self.defense = cnt('d') * 0.1;
+        self.photosynthesis = cnt('p') * 0.1;
+        self.motion = cnt('m') * 0.1;
+        self.intelligence = cnt('i') * 10.;
     }
 
     fn random_move(&mut self, speed: f32) {
@@ -241,7 +299,7 @@ impl Biot {
     }
 
     fn metabolism(&self) -> f32 {
-        0.2 * (4.5 * self.attack + 2.3 * self.defense + 2.5 * self.motion + 0.1 * self.intelligence)
+        0.2 * (3.5 * self.attack + 2.3 * self.defense + 2.5 * self.motion + 0.1 * self.intelligence)
     }
 
     fn weight(&self) -> f32 {
@@ -249,17 +307,20 @@ impl Biot {
     }
 
     pub fn draw(&self) {
-        let power = self.attack + self.defense + self.motion;
         let x = self.pos.x;
         let y = self.pos.y;
         let scale = 9.;
+        let mut weight = self.weight();
         if self.intelligence > 0. {
-            draw_circle(x, y, scale * (0.2 + self.photosynthesis + power), WHITE);
+            draw_circle(x, y, scale * (0.2 + weight), WHITE);
         }
-        draw_circle(x, y, scale * (self.photosynthesis + power), GREEN);
-        draw_circle(x, y, scale * (power), RED);
-        draw_circle(x, y, scale * (power - self.attack), DARKBLUE);
-        draw_circle(x, y, scale * (power - self.attack - self.defense), BLUE);
+        draw_circle(x, y, scale * weight, GREEN);
+        weight -= self.photosynthesis;
+        draw_circle(x, y, scale * weight, RED);
+        weight -= self.attack;
+        draw_circle(x, y, scale * weight, DARKBLUE);
+        weight -= self.defense;
+        draw_circle(x, y, scale * weight, BLUE);
     }
 }
 
@@ -297,16 +358,21 @@ extern crate test;
 
 #[cfg(test)]
 mod tests {
+    use super::test::black_box;
     use super::test::Bencher;
     use super::BiotCollection;
     use macroquad::prelude::*;
 
     #[bench]
     fn bench_biots_step(b: &mut Bencher) {
+        let _pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(16)
+            .build()
+            .unwrap();
         rand::srand(0);
-        let mut biots = BiotCollection::new(5000, vec2(800., 600.));
+        let mut biots = BiotCollection::new(10000, vec2(800., 600.));
         b.iter(|| {
-            biots.step(vec2(800., 600.));
+            black_box(biots.step(vec2(800., 600.)));
         });
     }
 }
