@@ -1,45 +1,102 @@
+use std::sync::Arc;
+
 use image::ImageBuffer;
 use image::Pixel;
 use image::Rgba;
 use macroquad::prelude::*;
 use num::Complex;
+use rayon::prelude::*;
+// pub use wasm_bindgen_rayon::init_thread_pool;
 
 pub async fn run() {
-    let mut image = None;
+    // let mut image;
     let mut w = screen_width();
     let mut h = screen_height();
     let mut texture = Texture2D::empty();
+    let resolution = 1000 as i32;
+    let mut zoom = 250 as f64;
+    let mut off = (-0.5, 0.);
+    let mut start;
+    let mut needs_update = true;
     loop {
-        let size = 1000;
-        if w != screen_width() || h != screen_height() || image == None {
+        let mut key_rot = |key: KeyCode, v: (f64, f64)| {
+            if is_key_down(key) {
+                needs_update = true;
+                off = (
+                    off.0 + v.0 * 250. / zoom as f64,
+                    off.1 + v.1 * 250. / zoom as f64,
+                );
+            }
+        };
+
+        key_rot(KeyCode::W, (0., 1.));
+        key_rot(KeyCode::A, (1., 0.));
+        key_rot(KeyCode::S, (0., -1.));
+        key_rot(KeyCode::D, (-1., 0.));
+
+        if is_key_down(KeyCode::E) {
+            needs_update = true;
+            zoom *= 2.;
+        }
+        if is_key_down(KeyCode::Q) {
+            needs_update = true;
+            zoom /= 2.;
+        }
+        needs_update |= w != screen_width() || h != screen_height();
+
+        if needs_update {
             w = screen_width();
             h = screen_height();
-            image = Some(ImageBuffer::<Rgba<u8>, Vec<u8>>::from_fn(
-                size,
-                size,
-                |x, y| {
-                    let scale = |v| ((v as i32 - size as i32 / 2) as f32 / 1000080.0) * 4.0;
-                    mandelbrot_optimized(scale(x) - 1., scale(y) + 0.3).map_or_else(
-                        || Rgba::from_channels(255, 255, 255, 255),
-                        |d| {
-                            Rgba::from_channels(
-                                (d / 100) as u8,
-                                (d / 100) as u8,
-                                (d / 100) as u8,
-                                255,
-                            )
-                        },
-                    )
-                    // return Rgba::from_channels(255, 255, 255, 255);
-                },
-            ));
+            start = (
+                (-resolution / 2) as f64 / zoom + off.0 as f64,
+                (-resolution / 2) as f64 / zoom + off.1 as f64,
+            );
+
+            let size = (resolution * resolution * 4) as usize;
+            let mut v = Vec::with_capacity(size);
+            for _ in 0..size {
+                v.push(0);
+            }
+            v.par_chunks_mut(4).enumerate().for_each(|(i, v)| {
+                let x = start.0 + (i as i32 % resolution) as f64 / zoom as f64;
+                let y = start.1 + (i as i32 / resolution) as f64 / zoom as f64;
+                let p = match mandelbrot_optimized(x, y) {
+                    None => 0,
+                    Some(d) => (100 - d / 100) as u8,
+                };
+                for k in 0..3 {
+                    v[k] = p;
+                }
+                v[3] = 255;
+            });
+
+            // image = ImageBuffer::<Rgba<u8>, Vec<u8>>::from_fn(
+            //     resolution as u32,
+            //     resolution as u32,
+            //     |x, y| {
+            //         let x = start.0 + x as f64 / zoom as f64;
+            //         let y = start.1 + y as f64 / zoom as f64;
+            //         match mandelbrot_optimized(x, y) {
+            //             None => Rgba::from_channels(0, 0, 0, 255),
+            //             Some(d) => Rgba::from_channels(
+            //                 (100 - d / 100) as u8,
+            //                 (100 - d / 100) as u8,
+            //                 (100 - d / 100) as u8,
+            //                 255,
+            //             ),
+            //         }
+            //     },
+            // );
+
             let i = Image {
-                bytes: image.as_ref().unwrap().as_raw().to_vec(),
-                width: size as u16,
-                height: size as u16,
+                bytes: v,
+                // bytes: image.unwrap().as_raw().to_vec(),
+                width: resolution as u16,
+                height: resolution as u16,
             };
             texture = Texture2D::from_image(&i);
         }
+        needs_update = false;
 
         draw_texture_ex(
             texture,
@@ -57,10 +114,10 @@ pub async fn run() {
     }
 }
 
-pub fn mandelbrot(x: f32, y: f32) -> Option<u32> {
+pub fn mandelbrot(x: f64, y: f64) -> Option<u32> {
     let start = Complex::new(x, y);
     let mut acc = start;
-    for i in 0..500 as i32 {
+    for i in 0..255 as i32 {
         acc = start + acc.powf(2.);
         if acc.norm() > 4. {
             return Some(i as u32);
@@ -69,7 +126,7 @@ pub fn mandelbrot(x: f32, y: f32) -> Option<u32> {
     None
 }
 
-pub fn mandelbrot_optimized(x: f32, y: f32) -> Option<u32> {
+pub fn mandelbrot_optimized(x: f64, y: f64) -> Option<u32> {
     let x = x as f64;
     let y = y as f64;
     let start_real = x;
@@ -78,7 +135,7 @@ pub fn mandelbrot_optimized(x: f32, y: f32) -> Option<u32> {
     let mut imag = y;
     let mut real2 = x * x;
     let mut imag2 = y * y;
-    for i in 0..100 as i32 {
+    for i in 0..1000 as i32 {
         imag = (real + real) * imag + start_imag;
         real = real2 - imag2 + start_real;
         real2 = real * real;
@@ -103,7 +160,7 @@ mod tests {
     fn bench_mandelbrot(b: &mut Bencher) {
         b.iter(|| {
             (0..100).for_each(|i| {
-                black_box(mandelbrot(i as f32, i as f32));
+                black_box(mandelbrot(i as f64, i as f64));
             });
         })
     }
@@ -112,7 +169,7 @@ mod tests {
     fn bench_mandelbrot_optimized(b: &mut Bencher) {
         b.iter(|| {
             black_box((0..100).for_each(|i| {
-                black_box(mandelbrot_optimized(i as f32, i as f32));
+                black_box(mandelbrot_optimized(i as f64, i as f64));
             }))
         })
     }
