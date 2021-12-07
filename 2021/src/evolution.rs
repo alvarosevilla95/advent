@@ -15,7 +15,7 @@ fn random_gene() -> char {
 
 pub async fn run() {
     rand::srand(miniquad::date::now().to_bits());
-    let mut biots = BiotCollection::new(500, vec2(screen_width(), screen_height()));
+    let mut biots = BiotCollection::new(2000, vec2(screen_width(), screen_height()));
 
     let _pool = rayon::ThreadPoolBuilder::new()
         .num_threads(16)
@@ -111,7 +111,7 @@ impl BiotCollection {
                         self.biots[n].pos.y as f64,
                     ])
                     .take_while(|(_other, d2)| {
-                        *d2 as f32 > (self.biots[n].intelligence.powf(2.)) * 1600.
+                        self.biots[n].intelligence.powf(2.) * 1600. > *d2 as f32
                     })
                     .find(|(other, _d2)| {
                         other.idx != n && self.biots[n].stronger(&self.biots[other.idx])
@@ -264,7 +264,7 @@ impl Biot {
     }
 
     pub fn stronger(&self, other: &Self) -> bool {
-        self.attack > other.attack + other.defense * 0.5
+        self.attack > other.attack + other.defense * 0.9
     }
 
     fn set_from_genome(&mut self) {
@@ -299,7 +299,7 @@ impl Biot {
     }
 
     fn metabolism(&self) -> f32 {
-        0.2 * (3.5 * self.attack + 2.3 * self.defense + 2.5 * self.motion + 0.1 * self.intelligence)
+        0.2 * (4.5 * self.attack + 2.3 * self.defense + 2.5 * self.motion + 0.1 * self.intelligence)
     }
 
     fn weight(&self) -> f32 {
