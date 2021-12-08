@@ -1,14 +1,26 @@
 #![feature(nll)]
-#[allow(dead_code)]
+#![feature(test)]
+#![allow(dead_code)]
+
 use macroquad::prelude::*;
 
-pub mod utils;
-// mod day1;
-// mod day2;
-// mod day3;
-mod day4;
+// extern crate blas_src;
+extern crate image;
+extern crate lazy_static;
 
-mod graphics;
+pub mod day1;
+pub mod day2;
+pub mod day3;
+pub mod day4;
+pub mod day5;
+pub mod day6;
+pub mod day7;
+pub mod day8;
+pub mod utils;
+
+pub mod evolution;
+pub mod graphics;
+pub mod mandelbrot;
 
 fn conf() -> Conf {
     Conf {
@@ -23,5 +35,5 @@ fn conf() -> Conf {
 
 #[macroquad::main(conf)]
 async fn main() {
-    graphics::run().await;
+    day8::run().await;
 }
