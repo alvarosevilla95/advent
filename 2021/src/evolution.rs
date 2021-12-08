@@ -89,12 +89,7 @@ impl BiotCollection {
         let lifes = self.interact(&tree);
 
         for i in 0..lifes.len() {
-            let l = lifes[i];
-            let c = self.biots[i].life;
-            self.biots[i].life = match l {
-                None => 0.,
-                Some(e) => c + e,
-            }
+            self.biots[i].life = lifes[i].map_or(0., |l| self.biots[i].life + l);
         }
         self.biots.retain(|b| !b.dead());
         self.biots.append(&mut new);
@@ -132,13 +127,11 @@ impl BiotCollection {
             .into_par_iter()
             .map(|n| {
                 let mut life = Some(0.);
-                for s in tree.locate_within_distance(
-                    [self.biots[n].pos.x as f64, self.biots[n].pos.y as f64],
-                    100.,
-                ) {
-                    if s.idx != n {
+                let pos = [self.biots[n].pos.x as f64, self.biots[n].pos.y as f64];
+                for f in tree.locate_within_distance(pos, 100.) {
+                    if f.idx != n {
                         let i = n;
-                        let j = s.idx;
+                        let j = f.idx;
                         let dist = (self.biots[i].pos - self.biots[j].pos).length();
                         if dist < 20. * (self.biots[i].weight() + self.biots[j].weight()) {
                             if self.biots[i].stronger(&self.biots[j]) {
