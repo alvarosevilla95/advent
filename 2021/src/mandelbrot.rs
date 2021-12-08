@@ -1,15 +1,8 @@
-use std::sync::Arc;
-
-use image::ImageBuffer;
-use image::Pixel;
-use image::Rgba;
 use macroquad::prelude::*;
 use num::Complex;
 use rayon::prelude::*;
-// pub use wasm_bindgen_rayon::init_thread_pool;
 
 pub async fn run() {
-    // let mut image;
     let mut w = screen_width();
     let mut h = screen_height();
     let mut texture = Texture2D::empty();
@@ -19,6 +12,14 @@ pub async fn run() {
     let mut start;
     let mut needs_update = true;
     loop {
+        if is_key_down(KeyCode::E) {
+            needs_update = true;
+            zoom *= 2.;
+        }
+        if is_key_down(KeyCode::Q) {
+            needs_update = true;
+            zoom /= 2.;
+        }
         let mut key_rot = |key: KeyCode, v: (f64, f64)| {
             if is_key_down(key) {
                 needs_update = true;
@@ -28,20 +29,10 @@ pub async fn run() {
                 );
             }
         };
-
         key_rot(KeyCode::W, (0., 1.));
         key_rot(KeyCode::A, (1., 0.));
         key_rot(KeyCode::S, (0., -1.));
         key_rot(KeyCode::D, (-1., 0.));
-
-        if is_key_down(KeyCode::E) {
-            needs_update = true;
-            zoom *= 2.;
-        }
-        if is_key_down(KeyCode::Q) {
-            needs_update = true;
-            zoom /= 2.;
-        }
         needs_update |= w != screen_width() || h != screen_height();
 
         if needs_update {
@@ -70,31 +61,11 @@ pub async fn run() {
                 v[3] = 255;
             });
 
-            // image = ImageBuffer::<Rgba<u8>, Vec<u8>>::from_fn(
-            //     resolution as u32,
-            //     resolution as u32,
-            //     |x, y| {
-            //         let x = start.0 + x as f64 / zoom as f64;
-            //         let y = start.1 + y as f64 / zoom as f64;
-            //         match mandelbrot_optimized(x, y) {
-            //             None => Rgba::from_channels(0, 0, 0, 255),
-            //             Some(d) => Rgba::from_channels(
-            //                 (100 - d / 100) as u8,
-            //                 (100 - d / 100) as u8,
-            //                 (100 - d / 100) as u8,
-            //                 255,
-            //             ),
-            //         }
-            //     },
-            // );
-
-            let i = Image {
+            texture = Texture2D::from_image(&Image {
                 bytes: v,
-                // bytes: image.unwrap().as_raw().to_vec(),
                 width: resolution as u16,
                 height: resolution as u16,
-            };
-            texture = Texture2D::from_image(&i);
+            });
         }
         needs_update = false;
 

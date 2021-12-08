@@ -267,6 +267,35 @@ impl Biot {
         self.attack > other.attack + other.defense * 0.9
     }
 
+    pub fn draw(&self) {
+        let x = self.pos.x;
+        let y = self.pos.y;
+        let scale = 9.;
+        let mut weight = self.weight();
+        if self.intelligence > 0. {
+            draw_circle(x, y, scale * (0.2 + weight), WHITE);
+        }
+        draw_circle(x, y, scale * weight, GREEN);
+        weight -= self.photosynthesis;
+        draw_circle(x, y, scale * weight, RED);
+        weight -= self.attack;
+        draw_circle(x, y, scale * weight, DARKBLUE);
+        weight -= self.defense;
+        draw_circle(x, y, scale * weight, BLUE);
+    }
+
+    fn base_life(&self) -> f32 {
+        8. * self.weight()
+    }
+
+    fn metabolism(&self) -> f32 {
+        0.2 * (4.5 * self.attack + 2.3 * self.defense + 2.5 * self.motion + 0.1 * self.intelligence)
+    }
+
+    fn weight(&self) -> f32 {
+        self.attack + self.defense + self.photosynthesis + self.motion
+    }
+
     fn set_from_genome(&mut self) {
         let cnt = |l| self.genome.iter().filter(|&&c| c == l).count() as f32;
         self.attack = cnt('a') * 0.1;
@@ -292,35 +321,6 @@ impl Biot {
         self.genome.remove(r);
         self.genome.insert(r, random_gene());
         self.set_from_genome();
-    }
-
-    fn base_life(&self) -> f32 {
-        8. * self.weight()
-    }
-
-    fn metabolism(&self) -> f32 {
-        0.2 * (4.5 * self.attack + 2.3 * self.defense + 2.5 * self.motion + 0.1 * self.intelligence)
-    }
-
-    fn weight(&self) -> f32 {
-        self.attack + self.defense + self.photosynthesis + self.motion
-    }
-
-    pub fn draw(&self) {
-        let x = self.pos.x;
-        let y = self.pos.y;
-        let scale = 9.;
-        let mut weight = self.weight();
-        if self.intelligence > 0. {
-            draw_circle(x, y, scale * (0.2 + weight), WHITE);
-        }
-        draw_circle(x, y, scale * weight, GREEN);
-        weight -= self.photosynthesis;
-        draw_circle(x, y, scale * weight, RED);
-        weight -= self.attack;
-        draw_circle(x, y, scale * weight, DARKBLUE);
-        weight -= self.defense;
-        draw_circle(x, y, scale * weight, BLUE);
     }
 }
 
