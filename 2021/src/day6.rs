@@ -20,7 +20,7 @@ pub async fn run() {
 fn parse_fish(input: &str) -> HashMap<i32, i64> {
     let mut fish = HashMap::new();
     for i in 0..9 {
-        fish.insert(i, 0 as i64);
+        fish.insert(i, 0_i64);
     }
 
     input

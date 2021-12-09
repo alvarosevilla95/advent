@@ -6,8 +6,8 @@ pub async fn run() {
     let mut w = screen_width();
     let mut h = screen_height();
     let mut texture = Texture2D::empty();
-    let resolution = 1000 as i32;
-    let mut zoom = 250 as f64;
+    let resolution = 1000_i32;
+    let mut zoom = 250_f64;
     let mut off = (-0.5, 0.);
     let mut start;
     let mut needs_update = true;
@@ -44,10 +44,7 @@ pub async fn run() {
             );
 
             let size = (resolution * resolution * 4) as usize;
-            let mut v = Vec::with_capacity(size);
-            for _ in 0..size {
-                v.push(0);
-            }
+            let mut v = vec![0; size];
             v.par_chunks_mut(4).enumerate().for_each(|(i, v)| {
                 let x = start.0 + (i as i32 % resolution) as f64 / zoom as f64;
                 let y = start.1 + (i as i32 / resolution) as f64 / zoom as f64;
@@ -88,7 +85,7 @@ pub async fn run() {
 pub fn mandelbrot(x: f64, y: f64) -> Option<u32> {
     let start = Complex::new(x, y);
     let mut acc = start;
-    for i in 0..255 as i32 {
+    for i in 0..255_i32 {
         acc = start + acc.powf(2.);
         if acc.norm() > 4. {
             return Some(i as u32);
@@ -106,7 +103,7 @@ pub fn mandelbrot_optimized(x: f64, y: f64) -> Option<u32> {
     let mut imag = y;
     let mut real2 = x * x;
     let mut imag2 = y * y;
-    for i in 0..1000 as i32 {
+    for i in 0..1000_i32 {
         imag = (real + real) * imag + start_imag;
         real = real2 - imag2 + start_real;
         real2 = real * real;

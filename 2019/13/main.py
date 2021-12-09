@@ -1,8 +1,5 @@
 import time
-import itertools
 import curses
-import keyboard
-from functools import reduce
 from intcode import IntcodeVm, parse_memory
 from random import randint
 
@@ -15,25 +12,30 @@ def agent(grid):
                 if p == tiles[3]: px = j
                 if p == tiles[4]: bx = j
         yield((px<bx)-(px>bx))
-        # time.sleep(0.02)
+        # time.sleep(0.08)
 
 def run_game(screen, data):
     mem = parse_memory(data)
     mem[0] = 2
     vm = IntcodeVm(mem)
 
-    grid = [[tiles[0] for x in range(48)] for y in range(24)]
+    grid = [[tiles[0] for _ in range(48)] for _ in range(24)]
     score = 0
     ai = agent(grid)
 
+    i = 0
     while True:
+        i+=1
         x = vm.eval(ai)
         if x is None: break
         y = vm.eval(ai)
         t = vm.eval(ai)
         if x == -1 and y == 0: score = t
         else: grid[y][x] = tiles[t]
-        draw(screen, grid, score)
+        if i % 1==0: 
+            draw(screen, grid, score)
+            time.sleep(0.005)
+    draw(screen, grid, score)
     time.sleep(10)
 
 

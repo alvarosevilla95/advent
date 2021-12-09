@@ -69,8 +69,8 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
                 .map(|n| {
                     decode((
                         n.len(),
-                        n.intersection(&cnt.get(&2).unwrap()).count(),
-                        n.intersection(&cnt.get(&4).unwrap()).count(),
+                        n.intersection(cnt.get(&2).unwrap()).count(),
+                        n.intersection(cnt.get(&4).unwrap()).count(),
                     ))
                 })
                 .join("")

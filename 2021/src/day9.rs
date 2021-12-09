@@ -1,12 +1,14 @@
 // https://adventofcode.com/2021/day/9
 
-use std::option::Iter;
-
 use itertools::Itertools;
 use macroquad::prelude::*;
 
-use crate::utils::{get_input, StringUtils};
+use crate::utils::*;
 
+// If you can model how the smoke flows through the caves,
+// you might be able to avoid it and be that much safer.
+// The submarine generates a heightmap of the floor of
+// the nearby caves for you (your puzzle input).
 pub async fn run() {
     let input = get_input(9).await;
     let _input = "2199943210
@@ -20,39 +22,43 @@ pub async fn run() {
         .map(|l| l.chars().map(|c| c.parse_i32()).collect_vec())
         .collect_vec();
 
+    fn neighbors<'a>(
+        map: &'a [Vec<i32>],
+        i: &'a usize,
+        j: &'a usize,
+    ) -> impl Iterator<Item = (usize, usize)> + 'a {
+        [-1, 0, 1]
+            .iter()
+            .cartesian_product([-1, 0, 1].iter())
+            .filter(|(ii, jj)| {
+                (**ii == 0) ^ (**jj == 0)
+                    && !(*i == 0 && **ii == -1
+                        || *j == 0 && **jj == -1
+                        || *i == map.len() - 1 && **ii == 1
+                        || *j == map[0].len() - 1 && **jj == 1)
+            })
+            .map(|(ii, jj)| ((*i as i32 + *ii) as usize, (*j as i32 + *jj) as usize))
+    }
+
     let row_len = map.len();
     let col_len = map[0].len();
-    let surr = [-1, 0, 1];
 
-    let mut local_mins = vec![];
-    for i in 0..row_len {
-        for j in 0..col_len {
-            if surr
-                .iter()
-                .map(|ii| {
-                    surr.iter()
-                        .filter(|jj| {
-                            (*ii == 0) ^ (**jj == 0)
-                                && !(i == 0 && *ii == -1
-                                    || j == 0 && **jj == -1
-                                    || i == row_len - 1 && *ii == 1
-                                    || j == col_len - 1 && **jj == 1)
-                        })
-                        .all(|jj| {
-                            map[i][j] < map[(i as i32 + *ii) as usize][(j as i32 + *jj) as usize]
-                        })
-                })
-                .all(|b| b)
-            {
-                local_mins.push((i, j));
-            }
-        }
-    }
+    // Part 1
+    // Find all of the low points on your heightmap.
+    // What is the sum of the risk levels of all low points on your heightmap?
+    let local_mins = (0..row_len)
+        .cartesian_product(0..col_len)
+        .filter(|(i, j)| neighbors(&map, i, j).all(|(ii, jj)| map[*i][*j] < map[ii][jj]))
+        .collect_vec();
+
     info!(
         "Sum of local minimums: {:?}",
         local_mins.iter().map(|(i, j)| map[*i][*j] + 1).sum::<i32>()
     );
 
+    // Part 2
+    // A basin is all locations that eventually flow downward to a single low point.
+    // Find the three largest basins and multiply their sizes together.
     let basins = local_mins
         .iter()
         .map(|(i, j)| {
@@ -63,26 +69,15 @@ pub async fn run() {
             while !to_visit.is_empty() {
                 let (i, j) = to_visit.pop().unwrap();
                 let c = map[i][j];
-                surr.iter().for_each(|ii| {
-                    surr.iter()
-                        .filter(|jj| {
-                            (*ii == 0) ^ (**jj == 0)
-                                && !(i == 0 && *ii == -1
-                                    || j == 0 && **jj == -1
-                                    || i == row_len - 1 && *ii == 1
-                                    || j == col_len - 1 && **jj == 1)
-                        })
-                        .for_each(|jj| {
-                            let n = ((i as i32 + *ii) as usize, (j as i32 + *jj) as usize);
-                            let cc = map[(i as i32 + *ii) as usize][(j as i32 + *jj) as usize];
-                            if visited.contains(&n) || cc == 9 || cc <= c {
-                                return;
-                            }
-                            visited.push(n);
-                            if cc >= c {
-                                to_visit.push(n);
-                            }
-                        })
+                neighbors(&map, &i, &j).for_each(|n| {
+                    let cc = map[n.0][n.1];
+                    if visited.contains(&n) || cc == 9 || cc <= c {
+                        return;
+                    }
+                    visited.push(n);
+                    if cc >= c {
+                        to_visit.push(n);
+                    }
                 });
             }
             visited

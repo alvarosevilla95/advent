@@ -18,7 +18,6 @@ pub async fn run() {
         .next()
         .unwrap()
         .split(',')
-        .map(|s| s)
         .map(|s| s.parse::<i32>().unwrap());
 
     let mut boards = input

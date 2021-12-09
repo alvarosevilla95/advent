@@ -19,8 +19,8 @@ struct Acc {
 }
 
 // How many measurements are larger than the previous measurement?
-async fn part_1(lines: &Vec<i32>) {
-    let count = lines.into_iter().fold(
+async fn part_1(lines: &[i32]) {
+    let count = lines.iter().fold(
         Acc {
             result: 0,
             last: i32::MAX,
@@ -39,7 +39,7 @@ async fn part_1(lines: &Vec<i32>) {
 }
 
 // Consider sums of a three-measurement sliding window. How many sums are larger than the previous sum?
-async fn part_2(lines: &Vec<i32>) {
+async fn part_2(lines: &[i32]) {
     let mut last_sum = i32::MAX;
     let mut total = 0;
     for i in 0..lines.len() - 2 {

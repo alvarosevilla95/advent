@@ -18,7 +18,7 @@ pub async fn run() {
 
 // Use the binary numbers in your diagnostic report to calculate the gamma rate and epsilon rate,
 // then multiply them together. What is the power consumption of the submarine?
-fn part_1(signals: &Vec<i32>) {
+fn part_1(signals: &[i32]) {
     let gamma = (0..12)
         .map(|i| {
             (
@@ -40,10 +40,10 @@ fn part_1(signals: &Vec<i32>) {
 
 // Use the binary numbers in your diagnostic report to calculate the oxygen generator rating
 // and CO2 scrubber rating, then multiply them together. What is the life support rating of the submarine?
-fn part_2(signals: &Vec<i32>) {
+fn part_2(signals: &[i32]) {
     let find = |reverse: bool| -> i32 {
-        let mut candidates = signals.clone();
-        for i in 11..0 {
+        let mut candidates = signals.clone().to_vec();
+        for i in (0..11).rev() {
             let significant_bit = most_frequent(
                 candidates
                     .iter()

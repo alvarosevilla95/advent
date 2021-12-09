@@ -16,6 +16,7 @@ pub mod day5;
 pub mod day6;
 pub mod day7;
 pub mod day8;
+pub mod day9;
 pub mod utils;
 
 pub mod evolution;
@@ -35,5 +36,5 @@ fn conf() -> Conf {
 
 #[macroquad::main(conf)]
 async fn main() {
-    day8::run().await;
+    day9::run().await;
 }
