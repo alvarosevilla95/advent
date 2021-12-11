@@ -1,6 +1,11 @@
 // https://adventofcode.com/2021/day/11
 
-use crate::utils::*;
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
+
+use crate::{utils::*, world2d::World2D};
 use itertools::Itertools;
 use macroquad::prelude::*;
 
@@ -22,6 +27,17 @@ pub async fn run() {
         .collect_vec();
 
     let mut total = 0;
+    let mut canvas = World2D::from_world(
+        map.len(),
+        map[0].len(),
+        |c| match *c {
+            0 => WHITE,
+            i => Color::new(i as f32 / 50., i as f32 / 50., i as f32 / 50., 1.0),
+        },
+        BLACK,
+    );
+
+    let mut now = Instant::now();
     for i in 0..1000000 {
         let mut visited = vec![];
         for i in 0..map.len() {
@@ -37,6 +53,16 @@ pub async fn run() {
             info!("First iteration where all flashed: {}", i);
             break;
         }
+
+        let flat = map.iter().flat_map(|c| c.iter()).map(|c| *c).collect_vec();
+        canvas.draw(&flat);
+        let ft = now.elapsed();
+        let frame_time = 10 * 16000000;
+        if ft.as_nanos() < frame_time {
+            thread::sleep(Duration::from_nanos((frame_time - ft.as_nanos()) as u64));
+        }
+        now = Instant::now();
+        next_frame().await
     }
 }
 
