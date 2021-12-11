@@ -9,6 +9,8 @@ extern crate image;
 extern crate lazy_static;
 
 pub mod day1;
+pub mod day10;
+pub mod day11;
 pub mod day2;
 pub mod day3;
 pub mod day4;
@@ -21,7 +23,9 @@ pub mod utils;
 
 pub mod evolution;
 pub mod graphics;
+pub mod life;
 pub mod mandelbrot;
+pub mod world2d;
 
 fn conf() -> Conf {
     Conf {
@@ -29,12 +33,12 @@ fn conf() -> Conf {
         window_width: 800,
         window_height: 600,
         high_dpi: true,
-        fullscreen: false,
+        fullscreen: true,
         ..Default::default()
     }
 }
 
 #[macroquad::main(conf)]
 async fn main() {
-    day9::run().await;
+    life::run().await;
 }

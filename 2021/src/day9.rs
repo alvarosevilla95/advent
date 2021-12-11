@@ -22,24 +22,6 @@ pub async fn run() {
         .map(|l| l.chars().map(|c| c.parse_i32()).collect_vec())
         .collect_vec();
 
-    fn neighbors<'a>(
-        map: &'a [Vec<i32>],
-        i: &'a usize,
-        j: &'a usize,
-    ) -> impl Iterator<Item = (usize, usize)> + 'a {
-        [-1, 0, 1]
-            .iter()
-            .cartesian_product([-1, 0, 1].iter())
-            .filter(|(ii, jj)| {
-                (**ii == 0) ^ (**jj == 0)
-                    && !(*i == 0 && **ii == -1
-                        || *j == 0 && **jj == -1
-                        || *i == map.len() - 1 && **ii == 1
-                        || *j == map[0].len() - 1 && **jj == 1)
-            })
-            .map(|(ii, jj)| ((*i as i32 + *ii) as usize, (*j as i32 + *jj) as usize))
-    }
-
     let row_len = map.len();
     let col_len = map[0].len();
 
