@@ -3,20 +3,20 @@ name = "advent_2021"
 version = "0.1.0"
 edition = "2021"
 
-[profile.dev.package.'*']
+[profile.dev]
 opt-level = 3
 
 [dependencies]
 array2d = "*"
 image = "*"
 itertools = "*"
-lazy_static = "*"
 macroquad = "0.3.10"
 macroquad-platformer = "0.1.2"
 macroquad-tiled = "0.1.1"
 nalgebra = "*"
 ndarray = { version = "0.15.0" }
 num = "*"
+petgraph = "*"
 rayon = "*"
 regex = "*"
 rstar = "0.9.2"
