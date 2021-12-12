@@ -54,7 +54,7 @@ pub async fn run() {
             break;
         }
 
-        let flat = map.iter().flat_map(|c| c.iter()).map(|c| *c).collect_vec();
+        let flat = map.iter().flat_map(|c| c.iter()).copied().collect_vec();
         canvas.draw(&flat);
         let ft = now.elapsed();
         let frame_time = 10 * 16000000;

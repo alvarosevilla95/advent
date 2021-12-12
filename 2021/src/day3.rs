@@ -42,7 +42,7 @@ fn part_1(signals: &[i32]) {
 // and CO2 scrubber rating, then multiply them together. What is the life support rating of the submarine?
 fn part_2(signals: &[i32]) {
     let find = |reverse: bool| -> i32 {
-        let mut candidates = signals.clone().to_vec();
+        let mut candidates = signals.to_vec();
         for i in (0..11).rev() {
             let significant_bit = most_frequent(
                 candidates

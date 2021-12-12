@@ -7,6 +7,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::utils::modulus;
+
 const LETTERS: &[char] = &['a', 'd', 'p', 'm', 'n', 'n', 'n', 'i'];
 
 fn random_gene() -> char {
@@ -88,8 +90,8 @@ impl BiotCollection {
 
         let lifes = self.interact(&tree);
 
-        for i in 0..lifes.len() {
-            self.biots[i].life = lifes[i].map_or(0., |l| self.biots[i].life + l);
+        for (i, l) in lifes.iter().enumerate() {
+            self.biots[i].life = l.map_or(0., |l| self.biots[i].life + l);
         }
         self.biots.retain(|b| !b.dead());
         self.biots.append(&mut new);
@@ -338,13 +340,6 @@ impl PointDistance for TreePoint {
     {
         (self.x as f64 - point[0]).powf(2.) + (self.y as f64 - point[1]).powf(2.)
     }
-}
-
-fn modulus<T>(a: T, b: T) -> T
-where
-    T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy,
-{
-    ((a % b) + b) % b
 }
 
 extern crate test;

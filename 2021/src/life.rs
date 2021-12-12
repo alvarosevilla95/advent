@@ -32,7 +32,7 @@ pub async fn run() {
 
     loop {
         next.par_iter_mut().enumerate().for_each(|(i, c)| {
-            let alive_neighbors = neighbors_flat(i, &(w as usize), &(h as usize))
+            let alive_neighbors = neighbors_flat(i, w as usize, h as usize)
                 .map(|p| match &curr[p] {
                     Cell::Alive => 1,
                     Cell::Dead => 0,

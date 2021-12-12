@@ -52,8 +52,8 @@ pub async fn run() {
                     None => 0,
                     Some(d) => (100 - d / 100) as u8,
                 };
-                for k in 0..3 {
-                    v[k] = p;
+                for k in v.iter_mut().take(3) {
+                    *k = p;
                 }
                 v[3] = 255;
             });

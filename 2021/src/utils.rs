@@ -9,40 +9,48 @@ pub async fn get_input(day: usize) -> String {
         .unwrap()
 }
 
+pub fn modulus<T>(a: T, b: T) -> T
+where
+    T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy,
+{
+    ((a % b) + b) % b
+}
+
 pub fn neighbors_2d<T: Clone>(
     map: &Array2D<T>,
     (i, j): (usize, usize),
     warp: bool,
     include_diagonal: bool,
 ) -> impl Iterator<Item = &T> {
+    let op = if include_diagonal {
+        std::ops::BitOr::bitor
+    } else {
+        std::ops::BitXor::bitxor
+    };
     [-1, 0, 1]
         .iter()
         .cartesian_product([-1, 0, 1].iter())
         .filter(move |(ii, jj)| {
-            ((**ii != 0) || (**jj != 0))
-                && (warp
-                    || !(i == 0 && **ii == -1
-                        || j == 0 && **jj == -1
-                        || i == map.row_len() - 1 && **ii == 1
-                        || j == map.column_len() - 1 && **jj == 1))
+            op(**ii != 0, **jj != 0)
+                && (!(i == 0 && **ii == -1
+                    || j == 0 && **jj == -1
+                    || i == map.row_len() - 1 && **ii == 1
+                    || j == map.column_len() - 1 && **jj == 1)
+                    || warp)
         })
         .map(move |(ii, jj)| {
             (
-                (i as i32 + ii) as usize % map.row_len(),
-                (j as i32 + jj) as usize % map.column_len(),
+                modulus(i as i32 + ii, map.row_len() as i32) as usize,
+                modulus(j as i32 + jj, map.column_len() as i32) as usize,
             )
         })
         .map(|(i, j)| map.get(i, j).unwrap())
 }
 
-pub fn neighbors_flat<'a>(
-    i: usize,
-    columns: &'a usize,
-    rows: &'a usize,
-) -> impl Iterator<Item = usize> + 'a {
+pub fn neighbors_flat(i: usize, columns: usize, rows: usize) -> impl Iterator<Item = usize> {
     let i = i as i32;
-    let columns = *columns as i32;
-    let rows = *rows as i32;
+    let columns = columns as i32;
+    let rows = rows as i32;
     [-1, 0, 1]
         .iter()
         .cartesian_product([-1, 0, 1].iter())
