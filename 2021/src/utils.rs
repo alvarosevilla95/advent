@@ -1,3 +1,4 @@
+use array2d::Array2D;
 use itertools::Itertools;
 use macroquad::prelude::*;
 use regex::Regex;
@@ -8,22 +9,30 @@ pub async fn get_input(day: usize) -> String {
         .unwrap()
 }
 
-pub fn neighbors<'a, T>(
-    map: &'a [Vec<T>],
-    i: &'a usize,
-    j: &'a usize,
-) -> impl Iterator<Item = (usize, usize)> + 'a {
+pub fn neighbors_2d<T: Clone>(
+    map: &Array2D<T>,
+    (i, j): (usize, usize),
+    warp: bool,
+    include_diagonal: bool,
+) -> impl Iterator<Item = &T> {
     [-1, 0, 1]
         .iter()
         .cartesian_product([-1, 0, 1].iter())
-        .filter(|(ii, jj)| {
+        .filter(move |(ii, jj)| {
             ((**ii != 0) || (**jj != 0))
-                && !(*i == 0 && **ii == -1
-                    || *j == 0 && **jj == -1
-                    || *i == map.len() - 1 && **ii == 1
-                    || *j == map[0].len() - 1 && **jj == 1)
+                && (warp
+                    || !(i == 0 && **ii == -1
+                        || j == 0 && **jj == -1
+                        || i == map.row_len() - 1 && **ii == 1
+                        || j == map.column_len() - 1 && **jj == 1))
         })
-        .map(|(ii, jj)| ((*i as i32 + *ii) as usize, (*j as i32 + *jj) as usize))
+        .map(move |(ii, jj)| {
+            (
+                (i as i32 + ii) as usize % map.row_len(),
+                (j as i32 + jj) as usize % map.column_len(),
+            )
+        })
+        .map(|(i, j)| map.get(i, j).unwrap())
 }
 
 pub fn neighbors_flat<'a>(
@@ -45,6 +54,24 @@ pub fn neighbors_flat<'a>(
                     || (i % columns == columns - 1) && **jj == 1)
         })
         .map(move |(ii, jj)| (i + ii * rows + jj) as usize)
+}
+
+pub fn neighbors<'a, T>(
+    map: &'a [Vec<T>],
+    i: &'a usize,
+    j: &'a usize,
+) -> impl Iterator<Item = (usize, usize)> + 'a {
+    [-1, 0, 1]
+        .iter()
+        .cartesian_product([-1, 0, 1].iter())
+        .filter(|(ii, jj)| {
+            ((**ii != 0) || (**jj != 0))
+                && !(*i == 0 && **ii == -1
+                    || *j == 0 && **jj == -1
+                    || *i == map.len() - 1 && **ii == 1
+                    || *j == map[0].len() - 1 && **jj == 1)
+        })
+        .map(|(ii, jj)| ((*i as i32 + *ii) as usize, (*j as i32 + *jj) as usize))
 }
 
 pub trait StringUtils {

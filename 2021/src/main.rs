@@ -33,12 +33,12 @@ fn conf() -> Conf {
         window_width: 800,
         window_height: 600,
         high_dpi: true,
-        fullscreen: true,
+        fullscreen: false,
         ..Default::default()
     }
 }
 
 #[macroquad::main(conf)]
 async fn main() {
-    life::run().await;
+    day11::run().await;
 }
