@@ -1,7 +1,6 @@
 // https://adventofcode.com/2021/day/3
 
 use macroquad::prelude::*;
-use std::collections::BTreeMap;
 
 use crate::utils::*;
 
@@ -24,7 +23,7 @@ pub async fn run() {
         .lines()
         .map(|l| usize::from_str_radix(l, 2).unwrap().try_into().unwrap())
         .collect::<Vec<i32>>();
-    part_1(&(signals.clone()));
+    part_1(&signals);
     part_2(&signals);
 }
 

@@ -56,8 +56,8 @@ fn search<'a>(
     graph
         .neighbors(last)
         .flat_map(|node| {
-            if node == last
-                || node == "start"
+            if node == "start"
+                || node == last
                 || is_small(node)
                     && path.contains(&node)
                     && path
@@ -68,11 +68,12 @@ fn search<'a>(
                         .into_iter()
                         .any(|(_, v)| v.count() > max_small_visits)
             {
-                return vec![];
+                vec![]
+            } else {
+                let mut new_path = path.to_vec();
+                new_path.push(node);
+                search(graph, &new_path, max_small_visits)
             }
-            let mut new_path = path.to_vec();
-            new_path.push(node);
-            search(graph, &new_path, max_small_visits)
         })
         .collect_vec()
 }

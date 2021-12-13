@@ -1,13 +1,21 @@
 // https://adventofcode.com/2021/day/13
 
-use std::{thread, time::Duration};
-
-use array2d::Array2D;
 use itertools::Itertools;
 use macroquad::prelude::*;
 
 use crate::utils::*;
 
+// The transparent paper is marked with random dots and includes
+// instructions on how to fold it up (your puzzle input)
+//
+// Part 1
+// How many dots are visible after completing just the first fold
+// instruction on your transparent paper?
+//
+// Part 2
+// Finish folding the transparent paper according to the instructions.
+// The manual says the code is always eight capital letters.
+// What code do you use to activate the infrared thermal imaging camera system?
 pub async fn run() {
     let input = get_input(13).await;
     let _input = "6,10
@@ -33,61 +41,56 @@ pub async fn run() {
         fold along x=5";
 
     let input = input.lines().collect_vec();
-    let fold_count = input
+    let separator = input
         .iter()
         .enumerate()
         .find(|(_, p)| p.is_empty())
         .map(|(i, _)| i)
         .unwrap();
 
-    let dots = &input[0..fold_count];
-    let mut dots = dots
+    let mut dots = input
         .iter()
-        .map(|l| l.split(',').collect_vec())
-        .map(|c| (c[0].parse_i32(), c[1].parse_i32()))
+        .take(separator)
+        .map(|l| {
+            let (x, y) = l.split(',').collect_tuple().unwrap();
+            (x.parse_i32(), y.parse_i32())
+        })
         .collect_vec();
 
-    let folds = &input[fold_count + 1..input.len()];
-    let folds = folds
-        .iter()
-        .map(|f| f.split(' ').last().unwrap())
-        .map(|f| f.split('=').collect_tuple::<(&str, &str)>().unwrap())
-        .map(|p| (p.0, p.1.parse_i32()))
-        .collect_vec();
+    let folds = input.iter().skip(separator + 1).map(|f| {
+        let (c, p) = f
+            .split(' ')
+            .last()
+            .unwrap()
+            .split('=')
+            .collect_tuple::<(&str, &str)>()
+            .unwrap();
+        (c, p.parse_i32())
+    });
 
-    let mut zoom = vec2(1. / 800., 1. / 800.);
-    let mut target = vec2(350., 0.);
-    for fold in folds {
-        match fold.0 {
-            "x" => fold_grid_horizontal(&mut dots, fold.1),
-            "y" => fold_grid_vertical(&mut dots, fold.1),
-            _ => (),
+    let mut zoom = vec2(1. / 40., 1. / 40.);
+    let mut target = vec2(20., 0.);
+    for (c, f) in folds {
+        for p in &mut dots {
+            *p = match (c, &p) {
+                ("x", (x, y)) if x > &f => (2 * f - x, *y),
+                ("y", (x, y)) if y > &f => (*x, 2 * f - y),
+                (_, p) => **p,
+            };
         }
-
-        draw_grid(&dots, 30, &mut zoom, &mut target).await;
+        dots.sort_unstable();
+        dots.dedup();
+        draw_grid(&dots, 6, &mut zoom, &mut target).await;
     }
-    draw_grid(&dots, 18000000, &mut zoom, &mut target).await;
-}
-
-fn fold_grid_horizontal(grid: &mut [(i32, i32)], pos: i32) {
-    for p in grid {
-        if p.0 > pos {
-            p.0 = 2 * pos - p.0
-        }
-    }
-}
-
-fn fold_grid_vertical(grid: &mut [(i32, i32)], pos: i32) {
-    for p in grid {
-        if p.1 > pos {
-            p.1 = 2 * pos - p.1
-        }
-    }
+    draw_grid(&dots, 6000, &mut zoom, &mut target).await;
 }
 
 async fn draw_grid(grid: &[(i32, i32)], frames: usize, zoom: &mut Vec2, target: &mut Vec2) {
     for _ in 0..frames {
         clear_background(BLACK);
+        if is_key_down(KeyCode::LeftSuper) && is_key_down(KeyCode::Q) {
+            return;
+        }
         if is_key_down(KeyCode::E) {
             *zoom *= 1.1;
         }
@@ -113,7 +116,7 @@ async fn draw_grid(grid: &[(i32, i32)], frames: usize, zoom: &mut Vec2, target: 
             ..Default::default()
         });
         for d in grid {
-            draw_rectangle(20. * (d.0) as f32, 20. * -(d.1) as f32, 20., 20., WHITE);
+            draw_rectangle((d.0) as f32, -(d.1) as f32, 1., 1., WHITE);
         }
         next_frame().await;
     }
