@@ -35,6 +35,11 @@ pub async fn run() {
         key_rot(KeyCode::D, (-1., 0.));
         needs_update |= w != screen_width() || h != screen_height();
 
+        let mut image = Image {
+            bytes: vec![0; (resolution * resolution * 4) as usize],
+            width: resolution as u16,
+            height: resolution as u16,
+        };
         if needs_update {
             w = screen_width();
             h = screen_height();
@@ -42,27 +47,23 @@ pub async fn run() {
                 (-resolution / 2) as f64 / zoom + off.0 as f64,
                 (-resolution / 2) as f64 / zoom + off.1 as f64,
             );
-
-            let size = (resolution * resolution * 4) as usize;
-            let mut v = vec![0; size];
-            v.par_chunks_mut(4).enumerate().for_each(|(i, v)| {
-                let x = start.0 + (i as i32 % resolution) as f64 / zoom as f64;
-                let y = start.1 + (i as i32 / resolution) as f64 / zoom as f64;
-                let p = match mandelbrot_optimized(x, y) {
-                    None => 0,
-                    Some(d) => (100 - d / 100) as u8,
-                };
-                for k in v.iter_mut().take(3) {
-                    *k = p;
-                }
-                v[3] = 255;
-            });
-
-            texture = Texture2D::from_image(&Image {
-                bytes: v,
-                width: resolution as u16,
-                height: resolution as u16,
-            });
+            image
+                .get_image_data_mut()
+                .par_iter_mut()
+                .enumerate()
+                .for_each(|(i, v)| {
+                    let x = start.0 + (i as i32 % resolution) as f64 / zoom as f64;
+                    let y = start.1 + (i as i32 / resolution) as f64 / zoom as f64;
+                    let p = match mandelbrot_optimized(x, y) {
+                        None => 0,
+                        Some(d) => (100 - d / 100) as u8,
+                    };
+                    for k in v.iter_mut().take(3) {
+                        *k = p;
+                    }
+                    v[3] = 255;
+                });
+            texture = Texture2D::from_image(&image);
         }
         needs_update = false;
 

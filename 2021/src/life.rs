@@ -46,8 +46,6 @@ pub async fn run() {
             };
         });
         curr = next.clone();
-        canvas.draw(&curr);
-        draw_text(format!("{}", get_fps()).as_str(), 10.0, 20.0, 30.0, RED);
-        next_frame().await
+        canvas.draw(&curr, 1).await;
     }
 }

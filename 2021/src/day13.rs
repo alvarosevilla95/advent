@@ -3,7 +3,7 @@
 use itertools::Itertools;
 use macroquad::prelude::*;
 
-use crate::utils::*;
+use crate::{utils::*, world2d::World2D};
 
 // The transparent paper is marked with random dots and includes
 // instructions on how to fold it up (your puzzle input)
@@ -68,8 +68,14 @@ pub async fn run() {
         (c, p.parse_i32())
     });
 
-    let mut zoom = vec2(1. / 40., 1. / 40.);
-    let mut target = vec2(20., 0.);
+    let mut canvas: World2D<(i32, i32)> = World2D {
+        camera: Camera2D {
+            zoom: vec2(1. / 40., 1. / 40.),
+            target: vec2(20., 0.),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
     for (c, f) in folds {
         for p in &mut dots {
             *p = match (c, &p) {
@@ -80,44 +86,7 @@ pub async fn run() {
         }
         dots.sort_unstable();
         dots.dedup();
-        draw_grid(&dots, 6, &mut zoom, &mut target).await;
+        canvas.draw_pixels(&dots, 6).await;
     }
-    draw_grid(&dots, 6000, &mut zoom, &mut target).await;
-}
-
-async fn draw_grid(grid: &[(i32, i32)], frames: usize, zoom: &mut Vec2, target: &mut Vec2) {
-    for _ in 0..frames {
-        clear_background(BLACK);
-        if is_key_down(KeyCode::LeftSuper) && is_key_down(KeyCode::Q) {
-            return;
-        }
-        if is_key_down(KeyCode::E) {
-            *zoom *= 1.1;
-        }
-        if is_key_down(KeyCode::Q) {
-            *zoom /= 1.1;
-        }
-        let mut key_rot = |key: KeyCode, v: (f32, f32)| {
-            if is_key_down(key) {
-                *target = vec2(
-                    target[0] + v.0 * 0.05 / zoom[0],
-                    target[1] + v.1 * 0.06 / zoom[1],
-                );
-            }
-        };
-        key_rot(KeyCode::W, (0., 1.));
-        key_rot(KeyCode::A, (-1., 0.));
-        key_rot(KeyCode::S, (0., -1.));
-        key_rot(KeyCode::D, (1., 0.));
-
-        set_camera(&Camera2D {
-            zoom: *zoom,
-            target: *target,
-            ..Default::default()
-        });
-        for d in grid {
-            draw_rectangle((d.0) as f32, -(d.1) as f32, 1., 1., WHITE);
-        }
-        next_frame().await;
-    }
+    canvas.draw_pixels(&dots, 6900).await;
 }

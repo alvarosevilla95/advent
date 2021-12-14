@@ -37,7 +37,6 @@ pub async fn run() {
         BLACK,
     );
 
-    let mut now = Instant::now();
     for i in 0..1000000 {
         let mut visited = vec![];
         for i in 0..map.len() {
@@ -55,14 +54,7 @@ pub async fn run() {
         }
 
         let flat = map.iter().flat_map(|c| c.iter()).copied().collect_vec();
-        canvas.draw(&flat);
-        let ft = now.elapsed();
-        let frame_time = 10 * 16000000;
-        if ft.as_nanos() < frame_time {
-            thread::sleep(Duration::from_nanos((frame_time - ft.as_nanos()) as u64));
-        }
-        now = Instant::now();
-        next_frame().await
+        canvas.draw(&flat, 10).await;
     }
 }
 
