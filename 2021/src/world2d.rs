@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use array2d::Array2D;
 use macroquad::prelude::*;

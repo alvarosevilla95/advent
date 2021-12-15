@@ -1,10 +1,5 @@
 // https://adventofcode.com/2021/day/11
 
-use std::{
-    thread,
-    time::{Duration, Instant},
-};
-
 use crate::{utils::*, world2d::World2D};
 use itertools::Itertools;
 use macroquad::prelude::*;
