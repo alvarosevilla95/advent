@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use array2d::Array2D;
 use macroquad::prelude::*;
 
@@ -13,7 +11,6 @@ pub struct World2D<T> {
     pub pixel_gap: f32,
     pub screen_width: f32,
     pub screen_height: f32,
-    pub last_frame: Instant,
 }
 
 impl<T> Default for World2D<T> {
@@ -32,7 +29,6 @@ impl<T> Default for World2D<T> {
             bg_color: BLACK,
             pixel_size: 1.,
             pixel_gap: 0.,
-            last_frame: Instant::now(),
         }
     }
 }

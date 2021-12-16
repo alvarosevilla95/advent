@@ -7,6 +7,16 @@ use petgraph::{algo::dijkstra, graphmap::DiGraphMap};
 
 use crate::utils::*;
 
+// You start in the top left position, your destination is the bottom right position,
+// and you cannot move diagonally. The number at each position is its risk level; to
+// determine the total risk of an entire path, add up the risk levels of each
+// position you enter
+//
+// The entire cave is actually five times larger in both dimensions than you thought;
+// the area you originally scanned is just one tile in a 5x5 tile area that forms the
+// full map. Your original map tile repeats to the right and downward; each time the
+// tile repeats to the right or downward, all of its risk levels are 1 higher than the
+// tile immediately up or left of it. However, risk levels above 9 wrap back around to 1
 pub async fn run() {
     let input = get_input(15).await;
     let _input = "1163751742
@@ -25,9 +35,10 @@ pub async fn run() {
         .map(|l| l.chars().map(|c| c.parse_i32() as usize).collect_vec())
         .collect_vec();
     let maze = Array2D::from_rows(&maze);
-
     let r_len = maze.row_len();
     let c_len = maze.column_len();
+
+    // Terrible
     let maze_iter = (0..5)
         .flat_map(move |x| {
             (0..r_len)
@@ -44,7 +55,6 @@ pub async fn run() {
             }
         }
     }
-    let path = dijkstra(&graph, (0, 0), Some((499, 499)), |e| *e.2);
-    info!("{:?}", path.get(&(499, 499)));
-    info!("{:?}", path.iter().map(|(_, v)| v).sum::<usize>());
+    let path = dijkstra(&graph, (0, 0), None, |e| *e.2);
+    info!("Min path: {:?}", path.get(&(499, 499)).unwrap());
 }

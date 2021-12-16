@@ -21,7 +21,7 @@ pub fn neighbors_2d<T: Clone>(
     (i, j): (usize, usize),
     warp: bool,
     include_diagonal: bool,
-) -> impl Iterator<Item = &T> {
+) -> impl Iterator<Item = (usize, usize, &T)> {
     let op = if include_diagonal {
         std::ops::BitOr::bitor
     } else {
@@ -44,7 +44,7 @@ pub fn neighbors_2d<T: Clone>(
                 modulus(j as i32 + jj, map.column_len() as i32) as usize,
             )
         })
-        .map(|(i, j)| map.get(i, j).unwrap())
+        .map(|(i, j)| (i, j, map.get(i, j).unwrap()))
 }
 
 pub fn neighbors_flat(i: usize, columns: usize, rows: usize) -> impl Iterator<Item = usize> {
