@@ -82,6 +82,32 @@ pub fn neighbors<'a, T>(
         .map(|(ii, jj)| ((*i as i32 + *ii) as usize, (*j as i32 + *jj) as usize))
 }
 
+pub struct BitReader {
+    bytes: Vec<u8>,
+    i: usize,
+}
+
+impl BitReader {
+    pub fn new(bytes: Vec<u8>) -> BitReader {
+        BitReader { bytes, i: 0 }
+    }
+
+    pub fn counter(&self) -> usize {
+        self.i
+    }
+
+    pub fn read(&mut self, len: usize) -> i64 {
+        let mut current = 0;
+        for i in self.i..self.i + len {
+            let b = i / 8;
+            let j = 7 - i % 8;
+            current = (current << 1) + ((self.bytes[b] >> j) & 1) as i64;
+        }
+        self.i = self.i + len;
+        current
+    }
+}
+
 pub trait StringUtils {
     fn parse_i32(&self) -> i32;
 }
