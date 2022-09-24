@@ -30,26 +30,6 @@ struct Packet {
 }
 
 impl Packet {
-    fn version_sum(&self) -> i64 {
-        self.version + self.subpackets.iter().map(|p| p.version_sum()).sum::<i64>()
-    }
-
-    fn eval(&self) -> i64 {
-        let mut subs = self.subpackets.iter().map(|p| p.eval());
-        let v = match self.ptype {
-            0 => subs.sum::<i64>(),
-            1 => subs.product::<i64>(),
-            2 => subs.min().unwrap(),
-            3 => subs.max().unwrap(),
-            4 => self.value,
-            5 => (subs.next().unwrap() > subs.next().unwrap()) as i64,
-            6 => (subs.next().unwrap() < subs.next().unwrap()) as i64,
-            7 => (subs.next().unwrap() == subs.next().unwrap()) as i64,
-            _ => panic!("couldn't parse packet"),
-        };
-        v
-    }
-
     fn from_bytes(bits: &mut BitReader) -> Packet {
         let version = bits.read(3);
         let ptype = bits.read(3);
@@ -104,5 +84,24 @@ impl Packet {
             packets.push(Packet::from_bytes(bits));
         }
         packets
+    }
+    fn version_sum(&self) -> i64 {
+        self.version + self.subpackets.iter().map(|p| p.version_sum()).sum::<i64>()
+    }
+
+    fn eval(&self) -> i64 {
+        let mut subs = self.subpackets.iter().map(|p| p.eval());
+        let v = match self.ptype {
+            0 => subs.sum::<i64>(),
+            1 => subs.product::<i64>(),
+            2 => subs.min().unwrap(),
+            3 => subs.max().unwrap(),
+            4 => self.value,
+            5 => (subs.next().unwrap() > subs.next().unwrap()) as i64,
+            6 => (subs.next().unwrap() < subs.next().unwrap()) as i64,
+            7 => (subs.next().unwrap() == subs.next().unwrap()) as i64,
+            _ => panic!("couldn't parse packet"),
+        };
+        v
     }
 }

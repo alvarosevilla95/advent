@@ -1,4 +1,3 @@
-#![feature(nll)]
 #![feature(test)]
 #![allow(dead_code)]
 
@@ -45,12 +44,12 @@ fn conf() -> Conf {
         window_width: 800,
         window_height: 600,
         high_dpi: true,
-        fullscreen: false,
+        fullscreen: true,
         ..Default::default()
     }
 }
 
 #[macroquad::main(conf)]
 async fn main() {
-    day16::run().await;
+    evolution::run().await;
 }

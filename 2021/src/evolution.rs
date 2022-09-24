@@ -37,8 +37,8 @@ pub async fn run() {
             LIGHTGRAY,
         );
         let ft = now.elapsed();
-        if ft.as_nanos() < 32000000 {
-            thread::sleep(Duration::from_nanos(32000000 - ft.as_nanos() as u64));
+        if ft.as_nanos() < 16000000 {
+            thread::sleep(Duration::from_nanos(16000000 - ft.as_nanos() as u64));
         }
         now = Instant::now();
         next_frame().await
@@ -91,7 +91,8 @@ impl BiotCollection {
         let lifes = self.interact(&tree);
 
         for (i, l) in lifes.iter().enumerate() {
-            self.biots[i].life = l.map_or(0., |l| self.biots[i].life + l);
+            self.biots[i].life = l.0.map_or(0., |l| self.biots[i].life + l);
+            self.biots[i].consumed += l.1;
         }
         self.biots.retain(|b| !b.dead());
         self.biots.append(&mut new);
@@ -124,12 +125,13 @@ impl BiotCollection {
             .collect::<Vec<Option<Vec2>>>()
     }
 
-    fn interact(&mut self, tree: &RTree<TreePoint>) -> Vec<Option<f32>> {
+    fn interact(&mut self, tree: &RTree<TreePoint>) -> Vec<(Option<f32>, u32)> {
         (0..self.biots.len())
             .into_par_iter()
             .map(|n| {
                 let mut life = Some(0.);
                 let pos = [self.biots[n].pos.x as f64, self.biots[n].pos.y as f64];
+                let mut consumed = 0 as u32;
                 for f in tree.locate_within_distance(pos, 100.) {
                     if f.idx != n {
                         let i = n;
@@ -138,15 +140,16 @@ impl BiotCollection {
                         if dist < 20. * (self.biots[i].weight() + self.biots[j].weight()) {
                             if self.biots[i].stronger(&self.biots[j]) {
                                 life = life.map(|l| l + self.biots[j].life * 0.8);
+                                consumed += 1
                             } else if self.biots[j].stronger(&self.biots[i]) {
-                                return None;
+                                return (None, 0);
                             }
                         }
                     }
                 }
-                life
+                (life, consumed)
             })
-            .collect::<Vec<Option<f32>>>()
+            .collect::<Vec<(Option<f32>, u32)>>()
     }
 }
 
@@ -156,6 +159,7 @@ pub struct Biot {
     pub pos: Vec2,
     speed: Vec2,
     age: u32,
+    consumed: u32,
 
     genome: Vec<char>,
     pub attack: f32,
@@ -196,6 +200,7 @@ impl Biot {
             pos: vec2(gen_range(0., 1.) * screen[0], gen_range(0., 1.) * screen[1]),
             speed: vec2(0., 0.),
             age: 0,
+            consumed: 0,
             genome,
             attack: 0.,
             defense: 0.,
@@ -223,6 +228,7 @@ impl Biot {
                 .nth(5);
             if close_by.map_or(true, |(_, d2)| d2 > 200.) {
                 let mut off = self.clone();
+                off.consumed = 0;
                 off.age = 0;
                 while gen_range(0., 1.) < 0.2 {
                     off.mutate();
@@ -267,16 +273,20 @@ impl Biot {
         let y = self.pos.y;
         let scale = 9.;
         let mut weight = self.weight();
-        if self.intelligence > 0. {
-            draw_circle(x, y, scale * (0.2 + weight), WHITE);
+        let mut cscale = (self.consumed as f32 + 30.) / 30.;
+        if cscale - 3. > 0.01 {
+            cscale = 3.;
         }
-        draw_circle(x, y, scale * weight, GREEN);
+        if self.intelligence > 0. {
+            draw_circle(x, y, cscale * scale * (0.2 + weight), WHITE);
+        }
+        draw_circle(x, y, scale * weight * cscale, GREEN);
         weight -= self.photosynthesis;
-        draw_circle(x, y, scale * weight, RED);
+        draw_circle(x, y, scale * weight * cscale, RED);
         weight -= self.attack;
-        draw_circle(x, y, scale * weight, DARKBLUE);
+        draw_circle(x, y, scale * weight * cscale, DARKBLUE);
         weight -= self.defense;
-        draw_circle(x, y, scale * weight, BLUE);
+        draw_circle(x, y, scale * weight * cscale, BLUE);
     }
 
     fn base_life(&self) -> f32 {
