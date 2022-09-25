@@ -89,6 +89,7 @@ def fill(screen, grid):
     return i
 
 def render(screen, f, *args):
+    curses.use_default_colors()
     curses.curs_set(0)
     f(screen, *args)
     curses.curs_set(1)
