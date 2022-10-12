@@ -1,11 +1,11 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    # nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils/master";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = inputs: with inputs;
+  outputs = {nixpkgs, flake-utils, rust-overlay, ...}@inputs: 
   flake-utils.lib.eachDefaultSystem (system:
   let
     overlays = [ (import rust-overlay) ];
@@ -19,7 +19,8 @@
         cargo
         libiconv
         darwin.apple_sdk.frameworks.Cocoa
-        rust-bin.nightly.latest.default
+        # rust-bin.nightly.latest.default
+        (rust-bin.nightly.latest.rust.override { extensions = ["rust-src"]; })
       ];
     };
 
