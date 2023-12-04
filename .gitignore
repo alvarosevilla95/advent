@@ -1,7 +1,8 @@
 .DS_Store
 .*sw*
-*__pycache__
-**/target
-**/examples
-**/*.hi
-**/*.o
+__pycache__
+target
+examples
+*.hi
+*.o
+.direnv
