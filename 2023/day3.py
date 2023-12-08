@@ -1,5 +1,4 @@
-import math, re
-from itertools import chain
+from common import *
 
 data = """
 467..114..
@@ -28,4 +27,4 @@ for r, row in enumerate(data):
 print(sum(chain(*parts.values())))
 
 # part 2
-print(sum(math.prod(c) for c in parts.values() if len(c)==2))
+print(sum(prod(c) for c in parts.values() if len(c)==2))

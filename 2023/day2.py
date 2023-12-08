@@ -1,4 +1,4 @@
-import re, math
+from common import *
 
 data = """
 Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
@@ -18,5 +18,5 @@ is_possible = lambda game: all(r.get(c, 0) <= v for r in game for c,v in possibl
 print(sum(i + 1 for i, game in enumerate(games) if is_possible(game)))
 
 # part 2
-score = lambda g: math.prod(max(r.get(c, 0) for r in g) for c in {c for r in g for c in r}) # type: ignore
+score = lambda g: prod(max(r.get(c, 0) for r in g) for c in {c for r in g for c in r}) # type: ignore
 print(sum(map(score, games)))

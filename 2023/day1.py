@@ -1,4 +1,4 @@
-import regex as re
+from common import *
 
 data = """
 two1nine

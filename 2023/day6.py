@@ -1,5 +1,4 @@
-import re
-from math import prod, floor, ceil
+from common import *
 
 data = """
 Time:      7  15   30

@@ -1,4 +1,4 @@
-from functools import reduce
+from common import *
 
 data = """
 seeds: 79 14 55 13
