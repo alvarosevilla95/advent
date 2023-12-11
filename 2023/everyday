@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for f in day*.py; do
+    echo "Running $f"
+    python $f
+done
