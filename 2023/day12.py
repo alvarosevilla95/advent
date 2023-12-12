@@ -14,19 +14,18 @@ data = open('inputs/day12.txt').read().splitlines()
 rows = [(s, tuple(map(int, c.split(',')))) for s, c in (line.split() for line in data)]
 
 @cache
-def count_matches(r, g, s=0):
-    if not g: return '#' not in r
-    if not r: return (s,) == g
-    if r[0] == '.': return 0 if s and s != g[0] else count_matches(r[1:], g[s or 0:]) 
-    if r[0] == "#": return 0 if s == g[0] else count_matches(r[1:], g, s+1)
-    if s: return count_matches(r[1:], *(g, s+1) if s != g[0] else (g[1:], 0))
-    return count_matches(r[1:], g) + count_matches(r[1:], g, 1)
-
-
-all_possible = lambda rows: sum(count_matches(*r) for r in rows)
+def count_matches(row, groups):
+    count, curr, rest = 0, groups[0], groups[1:]
+    for pos in range(len(row) - sum(groups) - len(rest) + 1):
+        if '.' not in row[pos:pos+curr]:
+            if not rest: count += '#' not in row[pos+curr:]
+            elif row[pos+curr] != "#": count += count_matches(row[pos+curr+1:], rest)
+        if row[pos] == "#": break
+    return count
 
 # part 1
-print(all_possible(rows))
+print(sum(count_matches(*r) for r in rows))
 
 #part2
-print(all_possible(('?'.join([s]*5), c*5) for s, c in rows))
+rows = [('?'.join([s]*5), c*5) for s,c in rows]
+print(sum(count_matches(*r) for r in rows))
