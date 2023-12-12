@@ -1,6 +1,13 @@
 #!/bin/bash
 
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NO_COLOR='\033[0m'
+
 for f in day*.py; do
-    echo "Running $f"
-    python $f
+    start=$(gdate +%s%3N)
+    output=$(python $f)
+    end=$(gdate +%s%3N)
+    echo -e "${GREEN}$f ${YELLOW}$((end-start)) ms"
+    echo -e "${NO_COLOR}$output\n"
 done
