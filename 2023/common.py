@@ -2,7 +2,7 @@ import regex as re, sys, os, time, curses
 from math import prod, floor, ceil, lcm, inf
 from random import randint
 from functools import reduce, cache
-from itertools import chain, combinations, takewhile
+from itertools import chain, combinations, takewhile, count
 from collections import defaultdict, deque
 from multiprocessing import Pool
 from heapq import heappop, heappush
