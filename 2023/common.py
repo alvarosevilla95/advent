@@ -1,4 +1,4 @@
-import regex as re, sys, os, time, curses
+import regex as re, numpy as np, sys, os, time, curses
 from math import prod, floor, ceil, lcm, inf
 from random import randint
 from functools import reduce, cache
