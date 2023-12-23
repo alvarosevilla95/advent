@@ -31,7 +31,7 @@ def draw_grid(screen, grid, rate, fdraw, *args):
     for i, l in enumerate(grid):
         for j, _ in enumerate(l):
             if not (curses_voff<= i<curses_voff+curses.LINES and curses_hoff<=j<curses_hoff+curses.COLS): continue
-            screen.addstr(i - curses_voff, j - curses_hoff, fdraw(j, i, grid, *args))
+            screen.addstr(i - curses_voff, j - curses_hoff, *fdraw(j, i, grid, *args))
     screen.refresh()
 
     if rate == 0 and time.perf_counter() < curses_counter: draw_grid(screen, grid, rate, fdraw, *args) # type: ignore
@@ -43,5 +43,6 @@ def wrap_in_curses(f, *args):
         curses.curs_set(0)
         curses_window = curses.initscr()
         curses_window.nodelay(True)
+        for i in range(curses.COLORS): curses.init_pair(i, i, -1)
         f(*args)
     curses.wrapper(cf, *args)
