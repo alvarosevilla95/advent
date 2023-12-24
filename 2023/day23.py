@@ -61,20 +61,22 @@ while to_remove := next(((n,e) for (n,e) in p2_edges.items() if len(e) == 2), No
 print(longest_path(p2_edges))
 
 # visualisation
+def paths_dfs(edges, n, d=0, current=[]):
+    if n == end: return [current]
+    paths = []
+    for xx, yy, l in edges[n]: 
+        if (c:=(xx, yy)) not in current: paths += paths_dfs(edges, c, d+l, current+[c])
+    return paths
 
-# def paths_dfs(edges, n, d, current=[]):
-#     if n == end: return [current]
-#     paths = []
-#     for xx, yy, l in edges[n]: 
-#         if (c:=(xx, yy)) not in current: paths += paths_dfs(edges, c, d+l, current+[c])
-#     return paths
+grid = lambda: [[(c, curses.color_pair(4)) for c in line] for line in data]
 
+def on_frame():
+    paths = sorted(paths_dfs(p1_edges, start), key=len)
+    for path in paths:
+        for (x,y) in [start] + path:
+            new = [(x, y, ('O', curses.color_pair(1)))]
+            yield DrawAction('char', new)
+        yield DrawAction('char', [], 0.5)
+        yield DrawAction('grid', grid())
 
-# def visualise(screen):
-#     paths = sorted(paths_dfs(p1_edges, start, 0), key=len)
-#     for path in paths:
-#         for i, _ in enumerate(path):
-#             draw_char = lambda x, y, _: ('O', curses.color_pair(1)) if (x, y) in path[:i] else (data[y][x] if data[y][x] != '.' else ' ', curses.color_pair(3))
-#             if i % 3: draw_grid(screen, data, 0, draw_char)
-
-# wrap_in_curses(visualise)
+# Visualiser(0.01, grid).run(on_frame) # type: ignore

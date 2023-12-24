@@ -28,9 +28,12 @@ def scan_light(x, y, d, draw=None):
         if data[y][x] == '|' and d in 'EW': d = 'SN'
         if data[y][x] == '-' and d in 'NS': d = 'WE'
         queue += [(x+dirs[i][0], y+dirs[i][1], i) for i in d]
-        if draw and (i:= i-1) == 0: 
-            draw(data, seen)
-            i = len(queue)
+        if draw: 
+            c = ('#', curses.color_pair(3))
+            draw(x, y,c)
+            if (i:= i-1) == 0: 
+                draw(x, y, c, True)
+                i = len(queue)
     return seen
 
 def scan_all_directions(i, draw=None):
@@ -39,10 +42,25 @@ def scan_all_directions(i, draw=None):
                len(scan_light(0, i, 'E', draw)),
                len(scan_light(len(data)-1, i, 'W', draw)))
 
-def viz(screen):
-    draw_char = lambda x, y, grid, seen: grid[y][x] if grid[y][x] != '.' else '#' if (x, y) in seen else ' '
-    draw = lambda grid, seen: draw_grid(screen, grid, 0.01, draw_char, seen)
-    max(scan_all_directions(i, draw) for i in range(len(data)))
+def viz():
+    grid = lambda: [[(c if c != '.' else ' ', curses.color_pair(2)) for c in line] for line in data]
+    with Visualiser(0.01, grid) as v: # type: ignore
+        def draw(x, y, c, ref=False):
+            v.draw_char(x,y,c)
+            if ref: 
+                v.get_frame()
+                v.refresh()
+
+        def viz_scan(x, y, d):
+            scan_light(x, y, d, draw)
+            v.draw_grid(grid())
+
+        v.draw_grid()
+        for i in range(len(data)):
+            viz_scan(i, 0, 'S')
+            viz_scan(i, len(data)-1, 'N')
+            viz_scan(0, i, 'E')
+            viz_scan(len(data)-1, i, 'W')
 
 if __name__ == '__main__':
     # part 1
@@ -51,4 +69,4 @@ if __name__ == '__main__':
     # part 2
     print(max(Pool().starmap(scan_all_directions, ([i] for i in range(len(data))))))
 
-    # wrap_in_curses(viz)
+    # viz()
