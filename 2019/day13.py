@@ -1,6 +1,6 @@
 import time
 import curses
-from intcode import IntcodeVm, parse_memory
+from intcode import IntcodeVm
 from random import randint
 
 tiles = [(' ', lambda: 1), ('#', lambda: randint(2,4)), ('X', lambda: randint(2,4)), ('_', lambda: 4), ('0', lambda: 4)]
@@ -15,7 +15,7 @@ def agent(grid):
         # time.sleep(0.08)
 
 def run_game(screen, data):
-    mem = parse_memory(data)
+    mem = IntcodeVm.parse_memory(data)
     mem[0] = 2
     vm = IntcodeVm(mem)
 
@@ -59,5 +59,5 @@ def draw(screen, grid, score):
     screen.addstr(len(grid), 0, "Current Score: " + str(score), curses.A_BOLD)
     screen.refresh()
 
-f = open('space-invaders.intc').read()
+f = open('inputs/day13.txt').read()
 curses.wrapper(lambda s: render(s, run_game, f))

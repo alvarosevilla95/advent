@@ -92,7 +92,7 @@ def test_permutation(program, perm):
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*rs))
     return queues[0].get_nowait()
 
-with open('./input.txt') as f:
+with open('inputs/day07.txt') as f:
     program = load_program(f.read())
     print(test_all(program, range(5)))
     print(test_all(program, range(5, 10)))

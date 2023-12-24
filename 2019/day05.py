@@ -59,7 +59,7 @@ def eval_program(p):
 def load_program(code):
     return list(map(lambda x: int(x), code.split(',')))
 
-with open('./input.txt') as f:
+with open('inputs/day05.txt') as f:
     program = load_program(f.read())
     # program = load_program('3,3,1105,-1,9,1101,0,0,12,4,12,99,1')
     eval_program(list(program))

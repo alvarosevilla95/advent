@@ -35,7 +35,7 @@ def max_yield(mat, ore):
         if ore > 0: fuel += f
     return fuel
 
-data = open('input.txt').read()
+data = open('inputs/day14.txt').read()
 recipes = parse_input(data)
 # Part 1
 print(ore_price('FUEL', 1))

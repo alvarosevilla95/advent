@@ -4,7 +4,7 @@ import curses
 from intcode import IntcodeVm
 
 def run_bot(screen):
-    f = open('input.txt').read()
+    f = open('inputs/day11.txt').read()
     vm = IntcodeVm(f)
 
     ds = '^>v<'
@@ -48,6 +48,6 @@ def draw(screen, grid, r, d):
         for j, p in enumerate(r):
             screen.addstr(i, j, d if p == 2 else '#' if p == 1 else ' ')
     screen.refresh()
-    time.sleep(0.2)
+    time.sleep(0.02)
 
 curses.wrapper(lambda s: render(s,run_bot))

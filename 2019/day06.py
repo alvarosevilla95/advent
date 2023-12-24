@@ -27,7 +27,7 @@ def dijkstra(graph, a, b):
         unvisited.remove(curr)
     return distances[b]
 
-data = open('./input.txt').read()
+data = open('inputs/day06.txt').read()
 edges = list(map(lambda l: l.split(')'), data.splitlines()))
 # Part 1
 print(total_orbits(get_tree(edges), 'COM'))

@@ -2,7 +2,7 @@ import time
 import curses 
 from intcode import IntcodeVm
 
-mem = open('input.txt').read()
+mem = open('inputs/day19.txt').read()
 
 def place_drone(x, y):
     def pipe_pos():

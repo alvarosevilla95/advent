@@ -6,7 +6,7 @@ def calc_fuel_full(mass):
     fuel = calc_fuel(mass)
     return fuel + calc_fuel_full(fuel)
 
-with open('./input.txt') as f:
-    modules = f.read().splitlines()
+with open('inputs/day01.txt') as f:
+    modules = [int(m) for m in f.read().splitlines()]
     total = sum(map(calc_fuel_full, modules))
     print(total)

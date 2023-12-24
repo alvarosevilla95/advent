@@ -207,7 +207,7 @@ def capture_video(screen, vm, lines):
     curses.curs_set(1)
 
 # Part 1
-mem = IntcodeVm.parse_memory(open('input.txt').read())
+mem = IntcodeVm.parse_memory(open('inputs/day17.txt').read())
 mem[0] = 2
 vm = IntcodeVm(mem)
 grid = parse_grid(vm)

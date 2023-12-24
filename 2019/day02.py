@@ -9,7 +9,7 @@ def parse_program(program):
         program[program[i+3]] = op(program[program[i+1]], program[program[i+2]])
     return program
 
-with open('./input.txt') as f:
+with open('inputs/day02.txt') as f:
     program = load_program(f.read())
 
     # Part 1

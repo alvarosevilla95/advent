@@ -8,13 +8,13 @@ def value(data, i, pattern):
 
 # Part 1
 pattern = [0, 1, 0, -1]
-raw = open('input.txt').read().strip()
+raw = open('inputs/day16.txt').read().strip()
 data = [int(s) for s in raw]
 for _ in range(100): data = [value(data, i, pattern) for i in range(len(data))]
 print(data[:8])
 
 # Part 2
-raw = open('input.txt').read().strip()
+raw = open('inputs/day16.txt').read().strip()
 data = [int(s) for s in raw] * 10000
 offset = int(raw[:7])
 assert offset > len(data) // 2 # Method only works on the right half of the data

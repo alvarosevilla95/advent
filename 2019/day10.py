@@ -85,7 +85,7 @@ def get_frame(o, k, points):
 
 
 
-data = open('input.txt').read().splitlines()
+data = open('inputs/day10.txt').read().splitlines()
 points = asteroids(data)
 
 # Part 1

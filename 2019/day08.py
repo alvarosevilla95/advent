@@ -8,7 +8,7 @@ def draw(img):
     for r in img: print(*['#' if x == 1 else ' ' for x in r])
 
 lenx, leny = 25, 6
-data = [int(x) for x in open('./input.txt').read().strip('\n')]
+data = [int(x) for x in open('inputs/day08.txt').read().strip('\n')]
 layers = split(data, lenx*leny)
 
 

@@ -109,7 +109,7 @@ def draw(screen, grid):
 lenx, leny = 41, 41
 sx, sy = lenx//2-1, leny//2-1
 
-f = open('input.txt').read()
+f = open('inputs/day15.txt').read()
 vm = IntcodeVm(f)
 
 # lab = map_ship()

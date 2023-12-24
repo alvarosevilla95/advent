@@ -51,7 +51,7 @@ def steps_to_loop(dim):
     while evolve_dim(n) != dim: i += 1
     return i
 
-moons = parse_input(open('input.txt').read())
+moons = parse_input(open('inputs/day12.txt').read())
 # Part 1
 for j in range(1000): moons = evolve(moons)
 print(system_energy(moons))

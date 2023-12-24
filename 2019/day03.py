@@ -18,7 +18,7 @@ def distance(point):
 def steps(grid_1, grid_2, point):
     return grid_1[point] + grid_2[point]
 
-with open('./input.txt') as f:
+with open('inputs/day03.txt') as f:
     lines = f.read().splitlines()
     insts_1 = lines[0].split(',')
     insts_2 = lines[1].split(',')
