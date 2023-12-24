@@ -6,6 +6,7 @@ from itertools import chain, combinations, takewhile, count
 from collections import defaultdict, deque
 from multiprocessing import Pool
 from heapq import heappop, heappush
+from sympy import Symbol, symbols, solve_poly_system
 
 from viz import draw_grid, wrap_in_curses
 
