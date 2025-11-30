@@ -1,0 +1,4 @@
+#!/bin/bash
+
+curl -s https://adventofcode.com/2025/day/$1/input --cookie "session=53616c7465645f5f44b55215fa8d161963e41f11f765ed24f959e4900717be1e7382d3c6a8383c29733a58efd01a2b4b6bcf223e69084ef3c963a2d915d499b6" > inputs/day$1.txt
+
