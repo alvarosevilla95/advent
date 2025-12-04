@@ -8,19 +8,17 @@
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
 
-      perSystem = {pkgs, ...}: {
+      perSystem = {pkgs, ...}: let
+        pythonEnv = pkgs.python3.withPackages (ps: [
+          ps.numpy
+          ps.scipy
+        ]);
+      in {
         devShells.default = pkgs.mkShell {
-          packages = with pkgs;
-            [
-              python3
-              go
-              cargo
-              rustc
-            ]
-            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
-              libiconv
-            ];
+          packages = [pythonEnv];
+          env.PYTHONPATH = "${pythonEnv}/${pythonEnv.sitePackages}";
         };
       };
     };
 }
+
