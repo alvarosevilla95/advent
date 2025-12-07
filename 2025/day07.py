@@ -1,0 +1,46 @@
+from functools import cache
+
+data = """
+.......S.......
+...............
+.......^.......
+...............
+......^.^......
+...............
+.....^.^.^.....
+...............
+....^.^...^....
+...............
+...^.^...^.^...
+...............
+..^...^.....^..
+...............
+.^.^.^.^.^...^.
+...............
+""".strip()
+
+data = open('inputs/day7.txt').read()
+
+grid = [list(line) for line in data.splitlines()]
+
+S = next((i, j) for i, row in enumerate(grid) for j, c in enumerate(row) if c == "S")
+
+beams, breaks = {S}, 0
+for _ in range(len(grid) - 1):
+    moved = {(r + 1, c) for r, c in beams}
+    splits = {p for p in moved if grid[p[0]][p[1]] == "^"}
+    beams = (moved - splits) | {(r, c + d) for r, c in splits for d in (-1, 1)}
+    breaks += len(splits)
+print(breaks)
+
+
+@cache
+def paths(r, c):
+    if (r := r + 1) == len(grid): return 1
+    if grid[r][c] == "^":
+        return paths(r, c - 1) + paths(r, c + 1)
+    return paths(r, c)
+
+print(paths(*S))
+
+
