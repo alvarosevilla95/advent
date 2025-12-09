@@ -12,6 +12,7 @@
         pythonEnv = pkgs.python3.withPackages (ps: [
           ps.numpy
           ps.scipy
+          ps.pygame
         ]);
       in {
         devShells.default = pkgs.mkShell {
@@ -21,4 +22,3 @@
       };
     };
 }
-
